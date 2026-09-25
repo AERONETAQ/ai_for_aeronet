@@ -1,0 +1,13 @@
+# python==3.13.12
+# Pinned from the conda "base" env this notebook was run in (Python 3.13.12, 2026-09-24)
+# install: pip install -r requirements.txt
+
+# used directly in notebooks/01_download_and_preprocess_AERONET_AODL2_data.ipynb
+pandas==2.2.3
+numpy==2.2.2
+requests==2.32.5
+tqdm==4.67.1
+pyarrow==24.0.0      # parquet engine for DataFrame.to_parquet / read_parquet
+
+# to run the notebook
+ipykernel==7.3.0
