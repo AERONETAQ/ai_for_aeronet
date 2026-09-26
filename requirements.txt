@@ -11,3 +11,7 @@ pyarrow==24.0.0      # parquet engine for DataFrame.to_parquet / read_parquet
 
 # to run the notebook
 ipykernel==7.3.0
+
+# used in notebooks/04_agent_pydantic_ai.ipynb (installed in the "chatbot" conda env, 2026-09-26)
+pydantic-ai-slim[bedrock,bedrock-mantle]==2.51.0   # bedrock-mantle = openai SDK client for GPT-5.6 Luna on bedrock-runtime /openai/v1
+aws-bedrock-token-generator==1.1.0                    # mints the 12 h Bedrock bearer token from the instance role

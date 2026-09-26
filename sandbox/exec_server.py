@@ -182,12 +182,13 @@ def state():
 
 
 def env():
-    import numpy, pandas, matplotlib, seaborn, pyarrow, IPython
+    import numpy, pandas, matplotlib, seaborn, scipy, statsmodels, pyarrow, IPython
     mem = Path("/sys/fs/cgroup/memory.max").read_text().strip()
     quota, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()       # e.g. "200000 100000" = 2 CPUs
     return {"python": sys.version.split()[0],
             "packages": {"numpy": numpy.__version__, "pandas": pandas.__version__, "pyarrow": pyarrow.__version__,
-                         "matplotlib": matplotlib.__version__, "seaborn": seaborn.__version__, "ipython": IPython.__version__},
+                         "matplotlib": matplotlib.__version__, "seaborn": seaborn.__version__, "scipy": scipy.__version__,
+                         "statsmodels": statsmodels.__version__, "ipython": IPython.__version__},
             "memory_limit_mb": int(mem) // 1_000_000 if mem.isdigit() else mem,
             "cpus": int(quota) / int(period) if quota.isdigit() else os.cpu_count(), "workspace_cap_gb": WORKSPACE_CAP / 1e9, "data": "/data/aeronet.parquet",
             "preloaded": STARTUP.strip()}

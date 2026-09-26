@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir \
     pyarrow==24.0.0 \
     matplotlib==3.11.2 \
     seaborn==0.13.2 \
+    scipy==1.18.1 \
+    statsmodels==0.15.0 \
     ipython==9.17.1
 
 # root fs is mounted read-only at run time -> everything writable lives in /tmp (tmpfs) or /workspace
