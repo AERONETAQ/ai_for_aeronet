@@ -15,3 +15,6 @@ ipykernel==7.3.0
 # used in notebooks/04_agent_pydantic_ai.ipynb (installed in the "chatbot" conda env, 2026-09-26)
 pydantic-ai-slim[bedrock,bedrock-mantle]==2.51.0   # bedrock-mantle = openai SDK client for GPT-5.6 Luna on bedrock-runtime /openai/v1
 aws-bedrock-token-generator==1.1.0                    # mints the 12 h Bedrock bearer token from the instance role
+
+# traces + conversation store (notebook 06+): sqlite3 is in the Python standard library, nothing to pip-install.
+# SQLite library 3.51.2 in the "chatbot" conda env (python -c "import sqlite3; print(sqlite3.sqlite_version)"), 2026-09-26

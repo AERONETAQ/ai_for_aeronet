@@ -20,6 +20,15 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.figure
+
+_saved_by_code = set()                                   # ids of figures the cell saved itself (fig.savefig / plt.savefig)
+_orig_savefig = matplotlib.figure.Figure.savefig
+def _tracked_savefig(self, *a, **k):
+    out = _orig_savefig(self, *a, **k)
+    _saved_by_code.add(id(self))
+    return out
+matplotlib.figure.Figure.savefig = _tracked_savefig
 import pandas as pd
 from IPython.core.interactiveshell import InteractiveShell
 from IPython.utils.capture import capture_output
@@ -66,7 +75,8 @@ def preview(obj):
     if obj is None:
         return None
     if isinstance(obj, pd.DataFrame):
-        return clip(f"DataFrame {obj.shape}\ndtypes:\n{obj.dtypes.to_string()}\n\nhead:\n{obj.head()}\n\ntail:\n{obj.tail()}")
+        return clip(f"DataFrame {obj.shape}\ndtypes:\n{obj.dtypes.to_string()}\n\n"
+                    f"head:\n{obj.head().to_string()}\n\ntail:\n{obj.tail().to_string()}")   # to_string: never hide columns with ...
     return clip(repr(obj))
 
 
@@ -90,15 +100,20 @@ def rss_mb():
     return int(open("/proc/self/statm").read().split()[1]) * os.sysconf("SC_PAGE_SIZE") // 1_000_000
 
 
-def save_figures():
+def save_figures(new_files):
+    """PNGs the cell wrote itself + auto-saved copies (fig_NNN.png) of figures it left unsaved; then close all."""
     global fig_counter
-    saved = []
+    saved = [f for f in new_files if f.lower().endswith(".png")]
     for n in plt.get_fignums():
+        fig = plt.figure(n)
+        if id(fig) in _saved_by_code:
+            continue
         fig_counter += 1
         path = WORKSPACE / f"fig_{fig_counter:03d}.png"
-        plt.figure(n).savefig(path, dpi=100, bbox_inches="tight")
+        fig.savefig(path, dpi=100, bbox_inches="tight")
         saved.append(path.name)
     plt.close("all")
+    _saved_by_code.clear()
     return saved
 
 
@@ -159,7 +174,8 @@ def exec_cell(code, timeout=60):
     err = res.error_before_exec or res.error_in_exec
     after_ns = snapshot()
     new_files = sorted(set(files()) - before_files)
-    figures = save_figures()
+    figures = save_figures(new_files)
+    new_files = [f for f in new_files if f not in figures]          # PNGs are reported once, under figures
     return {
         "ok": err is None,
         "timed_out": isinstance(err, TimeoutError),
