@@ -71,8 +71,10 @@ class UnixHTTP(http.client.HTTPConnection):                          # HTTP over
 
 def call(conv_id, endpoint, payload=None, timeout=30):
     conn = UnixHTTP(str(CONV_DIR / conv_id / "exec.sock"), timeout)
-    conn.request("POST" if payload is not None else "GET", endpoint,
-                 body=json.dumps(payload or {}), headers={"Content-Type": "application/json"})
+    if payload is None:                                              # GET: no body, the server never reads one
+        conn.request("GET", endpoint)
+    else:
+        conn.request("POST", endpoint, body=json.dumps(payload), headers={"Content-Type": "application/json"})
     out = json.loads(conn.getresponse().read())
     conn.close()
     return out

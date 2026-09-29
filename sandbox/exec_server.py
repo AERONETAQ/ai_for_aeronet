@@ -64,7 +64,15 @@ def clip(s):
 
 
 def describe(obj):
+    """Type + shape, and for a DataFrame its first columns: 'DataFrame(6204, 5)[date, AOD_500nm, ...]'."""
     try:
+        if isinstance(obj, pd.DataFrame):
+            cols = [str(c) for c in obj.columns]
+            shown = ", ".join(cols[:8]) + (f", ... {len(cols)} columns" if len(cols) > 8 else "")
+            return f"DataFrame{obj.shape}[{shown}]"
+        if isinstance(obj, (list, tuple, set, dict)):
+            first = next(iter(obj.values() if isinstance(obj, dict) else obj), None)
+            return f"{type(obj).__name__}({len(obj)}" + (f" of {type(first).__name__})" if first is not None else ")")
         shape = getattr(obj, "shape", None)
         return f"{type(obj).__name__}{tuple(shape)}" if shape is not None else type(obj).__name__
     except Exception:
@@ -94,6 +102,15 @@ def files():
 
 def workspace_bytes():
     return sum(p.stat().st_size for p in WORKSPACE.rglob("*") if p.is_file())
+
+
+def memory_limit_mb():
+    try:
+        mem = Path("/sys/fs/cgroup/memory.max").read_text().strip()        # set by docker --memory
+        return int(mem) // 1_000_000 if mem.isdigit() else None
+    except OSError:
+        return None
+MEMORY_LIMIT_MB = memory_limit_mb()
 
 
 def rss_mb():
@@ -189,12 +206,13 @@ def exec_cell(code, timeout=60):
         "vars_changed": {k: after_ns[k][1] for k in after_ns if k in before_ns and after_ns[k] != before_ns[k] and not k.startswith("_")},
         "elapsed_s": round(time.time() - t0, 3),
         "rss_mb": rss_mb(),
+        "memory_limit_mb": MEMORY_LIMIT_MB,
     }
 
 
 def state():
-    return {"vars": user_vars(), "files": files(), "workspace_mb": workspace_bytes() // 1_000_000,
-            "workspace_cap_mb": WORKSPACE_CAP // 1_000_000, "rss_mb": rss_mb()}
+    return {"vars": user_vars(), "files": files(), "workspace_mb": round(workspace_bytes() / 1e6, 2),
+            "workspace_cap_mb": WORKSPACE_CAP // 1_000_000, "rss_mb": rss_mb(), "memory_limit_mb": MEMORY_LIMIT_MB}
 
 
 def env():
