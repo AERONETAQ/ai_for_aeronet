@@ -100,6 +100,12 @@ def files():
     return sorted(str(p.relative_to(WORKSPACE)) for p in WORKSPACE.rglob("*") if p.is_file() and p not in (SOCKET, KILLED))
 
 
+def file_stamps():
+    """{name: (mtime_ns, size)} of every file in /workspace: a cell that overwrites a file changes its stamp."""
+    return {str(p.relative_to(WORKSPACE)): (p.stat().st_mtime_ns, p.stat().st_size)
+            for p in WORKSPACE.rglob("*") if p.is_file() and p not in (SOCKET, KILLED)}
+
+
 def workspace_bytes():
     return sum(p.stat().st_size for p in WORKSPACE.rglob("*") if p.is_file())
 
@@ -181,7 +187,7 @@ def reset():
 
 
 def exec_cell(code, timeout=60):
-    before_ns, before_files, t0 = snapshot(), set(files()), time.time()
+    before_ns, before_files, t0 = snapshot(), file_stamps(), time.time()
     signal.alarm(timeout)
     try:
         with capture_output(display=False) as cap:
@@ -190,7 +196,8 @@ def exec_cell(code, timeout=60):
         signal.alarm(0)
     err = res.error_before_exec or res.error_in_exec
     after_ns = snapshot()
-    new_files = sorted(set(files()) - before_files)
+    after_files = file_stamps()
+    new_files = sorted(f for f in after_files if after_files[f] != before_files.get(f))   # new OR overwritten
     figures = save_figures(new_files)
     new_files = [f for f in new_files if f not in figures]          # PNGs are reported once, under figures
     return {
