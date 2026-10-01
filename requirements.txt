@@ -18,3 +18,8 @@ aws-bedrock-token-generator==1.1.0                    # mints the 12 h Bedrock b
 
 # traces + conversation store (notebook 06+): sqlite3 is in the Python standard library, nothing to pip-install.
 # SQLite library 3.51.2 in the "chatbot" conda env (python -c "import sqlite3; print(sqlite3.sqlite_version)"), 2026-09-26
+
+# src/ + the terminal (python -m src.terminal), 2026-10-01, versions from the "chatbot" conda env
+pyyaml==6.0.3        # config/config.yaml
+rich==15.0.0         # terminal: answers as markdown, tables, panels
+pillow==12.2.0       # image size for the "[image: name, WxH px, ≈N tokens]" line (src/tools/sandbox_tools.py); notebooks 08/09 used it too

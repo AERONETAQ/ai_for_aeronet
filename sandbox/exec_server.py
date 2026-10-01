@@ -13,7 +13,7 @@ Two watchdog threads end the process (run the container with --rm and Docker rem
   * storage: /workspace above WORKSPACE_GB -> newest files deleted until under the cap, then exit
 Before exiting they write the reason to /workspace/_killed.txt so the host can tell the agent.
 """
-import json, os, signal, socketserver, sys, threading, time
+import json, os, re, signal, socketserver, sys, threading, time
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -186,6 +186,23 @@ def reset():
     BASE_NAMES = set(shell.user_ns)
 
 
+def column_hint(code, err):
+    """For a column error (KeyError, AttributeError): the columns and dtypes of every DataFrame in the kernel that
+    the cell names, appended to the error so the retry works from the real column list instead of a new guess."""
+    if not isinstance(err, (KeyError, AttributeError)):
+        return ""
+    names = set(re.findall(r"[A-Za-z_]\w*", code))
+    lines = []
+    for name in sorted(names & set(shell.user_ns)):
+        obj = shell.user_ns[name]
+        if type(obj).__name__ == "DataFrame":
+            cols = [f"{c} ({t})" for c, t in zip(obj.columns, obj.dtypes.astype(str))]
+            lines.append(f"  {name} ({len(obj)} rows): " + ", ".join(cols[:80]) + (" ..." if len(cols) > 80 else ""))
+    if not lines:
+        return ""
+    return "\ncolumns of the DataFrames this cell used (a name not listed does not exist in that frame):\n" + "\n".join(lines)
+
+
 def exec_cell(code, timeout=60):
     before_ns, before_files, t0 = snapshot(), file_stamps(), time.time()
     signal.alarm(timeout)
@@ -203,7 +220,7 @@ def exec_cell(code, timeout=60):
     return {
         "ok": err is None,
         "timed_out": isinstance(err, TimeoutError),
-        "error": repr(err) if err else None,
+        "error": repr(err) + column_hint(code, err) if err else None,
         "stdout": clip(cap.stdout),
         "stderr": clip(cap.stderr),
         "result": preview(res.result),
