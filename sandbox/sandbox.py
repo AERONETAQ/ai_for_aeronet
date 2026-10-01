@@ -20,7 +20,10 @@ def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
     ws.mkdir(parents=True, exist_ok=True)
     (ws / "_killed.txt").unlink(missing_ok=True)
     stop(conv_id)                                                    # never two containers for one conversation
-    cmd = ["docker", "run", "-d", "--rm", "--name", conv_id,
+    if subprocess.run(["docker", "image", "inspect", IMAGE], capture_output=True).returncode != 0:
+        print(f"building the {IMAGE} image (first run only, a few minutes) ...")
+        subprocess.run(["docker", "build", "-t", IMAGE, str(Path(__file__).parent)], check=True)
+    cmd =["docker", "run", "-d", "--rm", "--name", conv_id,
         "--network", "none",                                         # no internet, no LAN
         "--memory", memory, "--memory-swap", memory,                 # RAM cap, no swap
         "--cpus", str(cpus),
