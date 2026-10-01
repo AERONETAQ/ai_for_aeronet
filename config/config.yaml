@@ -11,28 +11,6 @@ max_images_per_call: 4                  # PNGs attached to one run_python result
 max_site_rows: 50                       # list_sites never returns more rows than this
 
 
-# FOR LMSTUDIO CONFIG
-# model:
-#   provider: openai-compatible
-#   base_url: http://localhost:1234/v1
-#   model_id: qwen2.5-7b-instruct      # the name LM Studio's server tab shows
-# limits:
-#   cost_limit: null                   # no prices for local models
-
-# FOR AN EXTERNAL OPENAI-COMPATIBLE API (OpenAI, OpenRouter, Together, Groq, DeepSeek, a vLLM server ...):
-# same provider, the server's /v1 endpoint as base_url and its key as api_key. Keep the key out of git: put it in
-# the environment and reference it here as ${OPENAI_API_KEY} (src/config.py expands ${VAR} in api_key).
-# model:
-#   provider: openai-compatible
-#   base_url: https://api.openai.com/v1           # OpenRouter: https://openrouter.ai/api/v1
-#   api_key: ${OPENAI_API_KEY}                    # export OPENAI_API_KEY=sk-... before python -m src.terminal
-#   model_id: gpt-4.1                             # OpenRouter: anthropic/claude-sonnet-4.5, etc.
-#   max_tokens: 8000
-#   prices: {input: 2.00, cache_read: 0.50, cache_write: null, output: 8.00}   # this provider's rates; null = built-in
-# limits:
-#   cost_limit: 0.10                              # needs prices: built-in ones or model.prices above, else set null
-
-
 model:
   provider: bedrock-mantle              # bedrock-mantle (GPT-5.6 Luna, Responses API, bearer token from the instance role)
                                         # | openai-compatible (LM Studio, Ollama, vLLM ...: chat completions at base_url, api_key below)
