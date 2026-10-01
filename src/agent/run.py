@@ -65,6 +65,7 @@ async def print_steps(run, show):
     in the notebook. Otherwise show["steps"]: the model's preamble sentence per step; show["step_tokens"]: its
     tokens and cost."""
     step = 0
+    so_far = 0     # cost of this question up to and including the current step
     async for node in run:
         if Agent.is_model_request_node(node):
             step += 1
@@ -78,16 +79,18 @@ async def print_steps(run, show):
                         print(f"  retry -> {p.tool_name}: {p.content}")
         elif Agent.is_call_tools_node(node):
             response = node.model_response
+            so_far += response.usage.cost or 0
+            so_far_text = f" | so far ${so_far:.4f}"
             if show.get("tool_calls"):
                 print(f"--- step {step}: from model")
                 for p in response.parts:
                     show_part(p, preamble=bool(response.tool_calls))
-                print(f"      {usage_line(response.usage)}")
+                print(f"      {usage_line(response.usage)}{so_far_text}")
             else:
                 if show.get("steps"):
                     print(f"step {step}: {preamble_of(response)}")
                 if show.get("step_tokens"):
-                    print(f"        {usage_line(response.usage)}")
+                    print(f"        {usage_line(response.usage)}{so_far_text}")
 
 
 def drop_images(messages):

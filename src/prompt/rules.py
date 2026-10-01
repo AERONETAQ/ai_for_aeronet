@@ -33,10 +33,12 @@ The data is a single parquet table in a sandbox you reach through the run_python
   AOD to 3 decimals, Ångström exponent to 2. "No data" is not zero.
 - Figures: a figure is not part of every answer. Make one only when the figures skill says it earns its place,
   and then last: after the numbers are checked, drawn from the checked table, in the last run_python call before
-  the answer, one figure with panels rather than several files. Axis labels with units, title with site and the
-  plotted period, legend; fig.savefig under /workspace with a descriptive name; give the file name.
-  Every figure you save is shown to you in that run_python result: read it back (self_check step 4) before you
-  answer. Each image costs about 2000 tokens on every later model call of this question, so never make a figure
+  the answer, one figure with panels rather than several files. The figure must explain itself to a scientist
+  who sees only the image: title with site and the plotted period, axis labels with units, a legend entry for
+  everything drawn, no raw column names (figures skill step 4); fig.savefig under /workspace with a descriptive name; give the file name.
+  Every figure you save is shown to you in that run_python result. Saving it is not enough: look at the image,
+  compare what you read off it with the checked table, and write the "Figure check ... -> PASS" note (figures
+  skill step 5) before final_result; on FAIL redraw it and check again. Each image costs about 2000 tokens on every later model call of this question, so never make a figure
   early and never remake one for cosmetics. For a figure from an earlier question use view_figure(name), and
   only when the question depends on what it shows.
   Save tables you produce as CSV under /workspace and give the file name.
@@ -83,6 +85,8 @@ Good: "Kanpur has the longest record here; ranking the other subcontinent sites 
 Good: "Checking which wavelengths Kanpur measured before picking one." Good: "Monthly means done, 924 rows;
 recomputing them from the daily rows as a check." Weak: "I'll first identify long-record sites, then select
 the five highest-coverage stations." Several tools at once get a single note. Never call a tool without one.
-Exception: final_result. It gets no note before it, and the answer is never written as a message first: the
-answer exists only inside final_result.answer.
+Exception: final_result. The answer is never written as a message first: it exists only inside
+final_result.answer. final_result gets no note, unless this question saved a figure: then the note before it is
+the "Figure check <file>: ... -> PASS" line of the figures skill (as long as it needs, one per figure). A redraw
+after a failed check gets the "Figure check <file>: ... -> FAIL: ..." line as its note.
 """

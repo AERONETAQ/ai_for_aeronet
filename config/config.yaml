@@ -6,7 +6,6 @@ db_file: agent_turns.sqlite
 
 keep_turns: 5                           # finished turns the model sees in full; older ones are one index line each (fetch_turn gives the rest)
 conv_cost_limit: null                   # USD for a whole conversation; null = no limit
-show_figures: true                      # false = the model never sees images (text-only models, ablation)
 max_images_per_call: 4                  # PNGs attached to one run_python result; the rest are named only
 max_site_rows: 50                       # list_sites never returns more rows than this
 
@@ -33,7 +32,7 @@ model:
   region: us-west-2
   base_url: https://bedrock-runtime.{region}.amazonaws.com/openai/v1   # LM Studio: http://localhost:1234/v1
   api_key: lm-studio                    # openai-compatible only; LM Studio accepts anything
-  model_id: us.openai.gpt-5.6-luna      # LM Studio: the model name shown in its server tab, e.g. qwen2.5-7b-instruct
+  model_id: us.openai.gpt-6-luna      # LM Studio: the model name shown in its server tab, e.g. qwen2.5-7b-instruct
   reasoning_effort: high                # none | low | medium | high | xhigh | max (bedrock-mantle only)
   max_tokens: 8000                      # output tokens of ONE model call (one step), not of the whole question
   prompt_cache_key: aeronet:v1          # bedrock-mantle only
@@ -51,7 +50,7 @@ limits:                                 # per question (Pydantic AI UsageLimits)
   request_limit: 20                     # model calls per question (loop depth)
   tool_calls_limit: 30                  # successful tool executions per question
   total_tokens_limit: 250000            # in + out, cumulative over the question
-  cost_limit: 0.10                      # USD per question
+  cost_limit: 0.2                      # USD per question
 
 tool_timeout: 120                       # seconds; a slower tool = failure + retry prompt to the model
 retries: 2                              # malformed final_result / failed validator: how often the model may try again
@@ -68,9 +67,9 @@ terminal:
   verbose:                              # what the terminal prints; true/false each. /verbose <name> toggles one for the session
     steps: true                         # one line per step: the sentence the model writes before its tool calls
     step_tokens: true                   # under each step: input (uncached, cache read, cache write), output (reasoning), cost of that call
-    tool_calls: false                   # every tool call with its arguments and every tool result, as the notebook prints them
+    tool_calls: true                   # every tool call with its arguments and every tool result, as the notebook prints them
     summary: true                       # under the answer: the model's one-line summary (its line in the index of earlier turns)
-    kept_variables: false                # under the answer: the variables the model kept in the kernel, with their meaning
+    kept_variables: true                # under the answer: the variables the model kept in the kernel, with their meaning
     files: true                         # under the answer: the files the turn wrote, as paths on this machine
     turn_tokens: true                   # under the answer: model calls, tool calls, tokens and cost of the whole turn
     conversation_cost: true             # after the answer: what the conversation has cost so far

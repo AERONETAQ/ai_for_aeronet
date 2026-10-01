@@ -22,7 +22,6 @@ sb.CONV_DIR, sb.PARQUET = CONV_DIR, PARQUET            # the sandbox client has 
 # the conversation
 KEEP_TURNS          = _cfg["keep_turns"]
 CONV_COST_LIMIT     = _cfg["conv_cost_limit"]
-SHOW_FIGURES        = _cfg["show_figures"]
 MAX_IMAGES_PER_CALL = _cfg["max_images_per_call"]
 MAX_SITE_ROWS       = _cfg["max_site_rows"]
 

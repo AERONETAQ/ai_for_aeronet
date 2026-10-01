@@ -58,7 +58,7 @@ def run_python(code: str, timeout: int = 60) -> str | list:
     text = "\n".join(out) or "(no output)"
 
     figures = r.get("figures") or []
-    if not config.SHOW_FIGURES or not figures:
+    if not figures:
         return text
 
     # the text, then the images the cell saved (at most MAX_IMAGES_PER_CALL): the model sees them in this result
@@ -76,8 +76,6 @@ def view_figure(name: str) -> str | list:
     Do NOT use it for figures made in this question: every run_python result already shows you the PNGs it saved,
     and once you have seen an image it stays in front of you. Use it only when the question depends on what an
     older figure shows and the earlier answer does not already say it. Each image costs a few hundred tokens.'''
-    if not config.SHOW_FIGURES:
-        return "images are switched off in this run; describe the figure from the earlier answer instead"
     name = name.replace("sandbox:", "").replace("/workspace/", "")    # accept the full path too
     if not name.lower().endswith(".png"):
         return f"{name}: only PNG files can be viewed"
