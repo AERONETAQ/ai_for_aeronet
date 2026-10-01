@@ -37,6 +37,8 @@ model:
   reasoning_effort: high                # none | low | medium | high | xhigh | max (bedrock-mantle only)
   max_tokens: 8000                      # output tokens of ONE model call (one step), not of the whole question
   prompt_cache_key: aeronet:v1          # bedrock-mantle only
+  update_prices: true                   # download the latest genai-prices table at startup and every hour;
+                                        # false = the table installed with the package (frozen, reproducible)
   prices:                               # USD per million tokens. null = Pydantic AI's built-in rate for this model at this
                                         # endpoint. A value replaces that rate everywhere: step cost, stored cost, cost limits.
                                         # Built-in Luna rates double above 272k tokens in one call; a value here is flat.
@@ -46,8 +48,8 @@ model:
     output: null                        # output, reasoning included (1.32)
 
 limits:                                 # per question (Pydantic AI UsageLimits); the loop stops when one is hit
-  request_limit: 10                     # model calls per question (loop depth)
-  tool_calls_limit: 20                  # successful tool executions per question
+  request_limit: 20                     # model calls per question (loop depth)
+  tool_calls_limit: 30                  # successful tool executions per question
   total_tokens_limit: 250000            # in + out, cumulative over the question
   cost_limit: 0.10                      # USD per question
 

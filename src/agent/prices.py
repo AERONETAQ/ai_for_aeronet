@@ -7,11 +7,15 @@ A rate left null keeps the table's own rate. A model the table does not know (a 
 new entry holding only the rates given: without a cache rate, cached input is billed at the input rate; without
 an input or output rate, that part costs nothing.
 Built-in rates can be tiered (Luna on Bedrock doubles above 272k tokens in one call); a custom rate is flat.
+
+The table ships inside the genai-prices package. start_price_updates() (config model.update_prices) downloads the
+latest one at startup and every hour after, and puts the config's rates back into each fresh table.
 """
 import copy
 from decimal import Decimal
 
 import genai_prices.data_snapshot as ds
+from genai_prices import UpdatePrices
 from genai_prices.types import ClauseEquals, ModelInfo, ModelPrice
 
 from .. import config
@@ -35,12 +39,11 @@ def latest(prices):
     return prices[-1].prices if isinstance(prices, list) else prices
 
 
-def apply_custom_prices(provider_name):
-    """Put the non-null rates of config model.prices into the price table of this Python process."""
+def put_custom_prices(snapshot, provider_name):
+    """Put the non-null rates of config model.prices into this price table (changed in place)."""
     custom = {RATES[name]: Decimal(str(value)) for name, value in config.PRICES.items() if value is not None}
     if not custom:
         return
-    snapshot = copy.deepcopy(ds.get_snapshot())
     entry = find_entry(snapshot, provider_name)
     if entry is not None:
         old = latest(entry.prices)
@@ -54,7 +57,43 @@ def apply_custom_prices(provider_name):
             return
         providers[0].models.insert(0, ModelInfo(id=config.MODEL_ID, match=ClauseEquals(equals=config.MODEL_ID),
                                                 prices=ModelPrice(**custom)))
+
+
+def apply_custom_prices(provider_name):
+    """Put the non-null rates of config model.prices into the price table of this Python process."""
+    if not any(value is not None for value in config.PRICES.values()):
+        return
+    snapshot = copy.deepcopy(ds.get_snapshot())
+    put_custom_prices(snapshot, provider_name)
     ds.set_custom_snapshot(ds.DataSnapshot(providers=snapshot.providers, from_auto_update=False))
+
+
+class UpdateWithCustomPrices(UpdatePrices):
+    """The background download of the price table, with the config's rates put back into every fresh table."""
+    provider_name = None
+
+    def fetch(self):
+        snapshot = super().fetch()
+        if snapshot is not None:
+            put_custom_prices(snapshot, self.provider_name)
+        return snapshot
+
+
+def start_price_updates(provider_name):
+    """Download the latest genai-prices table now and again every hour (config model.update_prices), so a price
+    change or a new model is picked up without upgrading the package. Waits up to 5 seconds for the first
+    download; when it fails (no network), the installed table stays in use and the next try is an hour later.
+    Costs already stored are never re-priced."""
+    if not config.UPDATE_PRICES:
+        return
+    updater = UpdateWithCustomPrices()
+    updater.provider_name = provider_name
+    updater.start()
+    try:
+        if not updater.wait(5):
+            print("price table: download not finished yet, the installed table is used until it is")
+    except Exception as e:
+        print(f"price table: download failed ({type(e).__name__}), the installed table is used")
 
 
 def rates_line(provider_name):

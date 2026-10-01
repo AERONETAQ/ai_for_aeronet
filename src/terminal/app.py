@@ -16,7 +16,7 @@ from ..conversation.store import all_turns
 from ..conversation.sandbox_state import start_sandbox_if_needed, sandbox_id, sandbox_restarted, state_block
 from ..conversation.context import preview_context
 from ..agent.build import make_agent
-from ..agent.prices import rates_line
+from ..agent.prices import rates_line, start_price_updates
 from ..agent.run import ask
 from ..agent.tokens import calls_table, check_tokens
 from . import view
@@ -72,6 +72,7 @@ def ensure_sandbox(say_running=False):
 async def main():
     show = dict(config.VERBOSE)                        # the print flags; /verbose changes them for this session
     agent = make_agent()
+    start_price_updates(agent.model.system)            # latest price table now and every hour (model.update_prices)
     view.console.print(f"[bold]AERONET agent[/] · {config.MODEL_ID} ({config.PROVIDER}) · reasoning "
                        f"{config.REASONING_EFFORT} · keep_turns {config.KEEP_TURNS} · config {config.CONFIG_FILE}")
     view.console.print(rates_line(agent.model.system))

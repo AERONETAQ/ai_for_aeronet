@@ -35,6 +35,7 @@ MODEL_ID         = _cfg["model"]["model_id"]
 REASONING_EFFORT = _cfg["model"]["reasoning_effort"]
 MAX_TOKENS       = _cfg["model"]["max_tokens"]
 PROMPT_CACHE_KEY = _cfg["model"]["prompt_cache_key"]
+UPDATE_PRICES    = _cfg["model"].get("update_prices", True)   # download the latest price table at startup + hourly
 PRICES           = _cfg["model"].get("prices") or {}  # {input, cache_read, cache_write, output}: USD per M tokens, None = built-in
 
 # one question
