@@ -11,6 +11,22 @@ max_images_per_call: 4                  # PNGs attached to one run_python result
 max_site_rows: 50                       # list_sites never returns more rows than this
 
 
+# FOR AN EXTERNAL OPENAI-COMPATIBLE API (OpenAI, OpenRouter, Together, Groq, DeepSeek, a vLLM server ...):
+# same provider, the server's /v1 endpoint as base_url and its key as api_key. Keep the key out of git: put it in
+# the environment and reference it here as ${OPENAI_API_KEY} (src/config.py expands ${VAR} in api_key).
+# model:
+#   provider: openai-compatible
+#   base_url: https://api.openai.com/v1           # OpenRouter: https://openrouter.ai/api/v1
+#   api_key: ${OPENAI_API_KEY}                    # export OPENAI_API_KEY=sk-... before python -m src.terminal
+#   model_id: gpt-4.1                             # OpenRouter: anthropic/claude-sonnet-4.5, etc.
+#   max_tokens: 8000
+#   reasoning_effort: high  
+#   prompt_cache_key: aeronet:v1 
+
+#   prices: {input: 2.00, cache_read: 0.50, cache_write: null, output: 8.00}   # this provider's rates; null = built-in
+# limits:
+#   cost_limit: 0.10   
+
 model:
   provider: bedrock-mantle              # bedrock-mantle (GPT-5.6 Luna, Responses API, bearer token from the instance role)
                                         # | openai-compatible (LM Studio, Ollama, vLLM ...: chat completions at base_url, api_key below)
@@ -50,9 +66,9 @@ terminal:
   verbose:                              # what the terminal prints; true/false each. /verbose <name> toggles one for the session
     steps: true                         # one line per step: the sentence the model writes before its tool calls
     step_tokens: true                   # under each step: input (uncached, cache read, cache write), output (reasoning), cost of that call
-    tool_calls: true                   # every tool call with its arguments and every tool result, as the notebook prints them
+    tool_calls: false                   # every tool call with its arguments and every tool result, as the notebook prints them
     summary: true                       # under the answer: the model's one-line summary (its line in the index of earlier turns)
-    kept_variables: true                # under the answer: the variables the model kept in the kernel, with their meaning
+    kept_variables: false                # under the answer: the variables the model kept in the kernel, with their meaning
     files: true                         # under the answer: the files the turn wrote, as paths on this machine
     turn_tokens: true                   # under the answer: model calls, tool calls, tokens and cost of the whole turn
     conversation_cost: true             # after the answer: what the conversation has cost so far
