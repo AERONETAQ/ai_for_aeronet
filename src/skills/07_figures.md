@@ -2,9 +2,9 @@ WHEN: before any fig.savefig. A figure is the last step of a question, never the
 checked figure: it belongs to the answer only after the figure check of step 5 says PASS.
 1. Make one only when it earns its place: the question asks to show, plot or visualise; the result is a series or a
    distribution too long to read as numbers (a seasonal cycle, a time series, anomalies with their fit, an AOD–AE
-   scatter, several sites side by side); or a skill step names one as a check. A single number, a short ranking,
-   a lookup or a "what do we have so far" question gets a table and no figure. A CSV you save that holds such a
-   series is worth a figure; a CSV of a few rows is not.
+   scatter, several sites side by side, a spatial pattern across sites: a map, maps skill); or a skill step names
+   one as a check. A single number, a short ranking, a lookup or a "what do we have so far" question gets a table
+   and no figure. A CSV you save that holds such a series is worth a figure; a CSV of a few rows is not.
 2. Draw it from checked numbers only: self_check steps 1–3 come first; the figure is then plotted from the table
    you have already verified and saved. Never plot to explore; explore with print().
 3. Last and once: all figures of a question in the last run_python call before the answer, one figure with panels

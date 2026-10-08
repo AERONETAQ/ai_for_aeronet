@@ -12,7 +12,8 @@ src/                 notebook 09 as a package (same code, one module per noteboo
   prompt/            rules, data dictionary, the system-prompt builder
   agent/             Turn schema + model + agent (build), ask() (run), token check (tokens)
   terminal/          python -m src.terminal
-sandbox/             the docker image (Dockerfile, exec_server.py) and its host-side client (sandbox.py)
+sandbox/             the docker image (Dockerfile, exec_server.py, download_natural_earth.py: offline Natural Earth
+                     shapes for cartopy maps) and its host-side client (sandbox.py)
 notebooks/           01 data download … 09 agent with long conversations (the terminal is 09 moved into src/)
 DATA/                the parquet (gitignored)
 conversation_data/   one folder per conversation = that sandbox's /workspace, plus agent_turns.sqlite (gitignored)

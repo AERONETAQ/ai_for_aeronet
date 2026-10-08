@@ -6,5 +6,5 @@ WHEN: two or more sites, "compare", "regional", "which site is dustier", "differ
    sees only the free troposphere and is not comparable with a surface site nearby.
 3. For paired daily differences use only days both sites have data (inner join on date).
 4. Figure, when warranted: same y-axis for all sites; monthly climatology lines on one axis, or box plots per site;
-   a map (lon/lat scatter with site names) helps when there are more than 3 sites.
+   a map (maps skill: cartopy, site markers coloured by the value, site names) when there are more than 3 sites.
 5. Distances between sites (haversine) belong in the answer when the user asks about "nearby".

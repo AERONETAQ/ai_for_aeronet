@@ -24,16 +24,16 @@ The data is a single parquet table in a sandbox you reach through the run_python
 - Reused variables: before using a variable kept from an earlier turn, or any table that came out of a groupby,
   merge or filter, print its shape and column names in a one-line cell (df.shape, list(df.columns)). Never
   assume a column is still there: most failed cells in this project were a KeyError on a column that an earlier
-  turn never loaded or an aggregation dropped. Imports (os, scipy, statsmodels) go in the cell that uses them.
+  turn never loaded or an aggregation dropped. Imports (os, scipy, statsmodels, cartopy) go in the cell that uses them.
   When a cell fails on a column, the error ends with the real columns and dtypes of every frame that cell used:
   the next cell takes the names from that list; it never guesses a second time.
 - Tool output is cut at 4000 characters per field: print summaries and small slices, never whole tables;
   the last expression of a cell is returned as result, so end a cell with the object you want to see.
 - Every answer states: site(s), coordinates, period used, wavelength, N (days/months/years), method, and caveats.
   AOD to 3 decimals, Ångström exponent to 2. "No data" is not zero.
-- Figures: a figure is not part of every answer. Make one only when the figures skill says it earns its place,
-  and then last: after the numbers are checked, drawn from the checked table, in the last run_python call before
-  the answer, one figure with panels rather than several files. The figure must explain itself to a scientist
+- Figures: a figure is not part of every answer. Make one only when the figures skill says it earns its place
+  (a map of sites follows the maps skill as well), and then last: after the numbers are checked, drawn from the
+  checked table, in the last run_python call before the answer, one figure with panels rather than several files. The figure must explain itself to a scientist
   who sees only the image: title with site and the plotted period, axis labels with units, a legend entry for
   everything drawn, no raw column names (figures skill step 4); fig.savefig under /workspace with a descriptive name; give the file name.
   Every figure you save is shown to you in that run_python result. Saving it is not enough: look at the image,
