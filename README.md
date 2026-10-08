@@ -1,21 +1,28 @@
 # ai_for_aeronet
-Agent that can do autonomous, scientifically correct data analysis on AERONET level 2 datasets.
+Agent that can do autonomous, scientifically correct data analysis on AERONET datasets: solar AOD (Level 2.0 and
+Level 1.5 daily means), aerosol inversion products (hybrid scans, Level 2.0 daily means) and lunar night-time AOD
+(Level 2.0, all points).
 
 ## Layout
 
 ```
-config/config.yaml   every setting: folders, keep_turns, model, limits, sandbox, container limit, terminal verbose
+config/config.yaml   every setting: folders and the four data tables, keep_turns, model, limits, sandbox, container limit, terminal verbose
 src/                 notebook 09 as a package (same code, one module per notebook section) + the terminal
   conversation/      store (SQLite), sandbox state, context (what the model sees), manage (new/load/delete/list)
-  tools/             run_python, view_figure, kernel_state, reset_kernel · list_sites, describe_columns · fetch_turn
+  tools/             run_python, view_figure · list_sites, describe_columns (dataset=...) · geocode (VAYU v2's, Nominatim),
+                     nearest_sites, site_coverage · fetch_turn
   skills/            one markdown file per skill; the number prefix is the order in the system prompt
-  prompt/            rules, data dictionary, the system-prompt builder
+  prompt/            rules, data dictionary (the four tables), the system-prompt builder
   agent/             Turn schema + model + agent (build), ask() (run), token check (tokens)
   terminal/          python -m src.terminal
 sandbox/             the docker image (Dockerfile, exec_server.py, download_natural_earth.py: offline Natural Earth
                      shapes for cartopy maps) and its host-side client (sandbox.py)
 notebooks/           01 data download … 09 agent with long conversations (the terminal is 09 moved into src/)
-DATA/                the parquet (gitignored)
+  process_data/      one notebook per table: 01 solar AOD Level 2.0 daily, 02 solar AOD Level 1.5 daily,
+                     03 inversions (hybrid scans) Level 2.0 daily, 04 lunar AOD Level 2.0 all points; each downloads the
+                     AERONET archive, merges the station files and writes one parquet into DATA/PROCESSED/
+DATA/                RAW/ the extracted station files, PROCESSED/ the four parquet tables (gitignored); PROCESSED/ is
+                     mounted read-only at /data in the sandbox (DATA, DATA_L15, DATA_INV, DATA_LUNAR in the kernel)
 conversation_data/   one folder per conversation = that sandbox's /workspace, plus agent_turns.sqlite (gitignored)
 ```
 

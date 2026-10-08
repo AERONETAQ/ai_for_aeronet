@@ -11,8 +11,10 @@ checked numbers, self-explanatory, figure check); this adds what is special abou
    crs=ccrs.PlateCarree())), or the box of the region asked about. ccrs.PlateCarree() for regions,
    ccrs.Robinson() with ax.set_global() for the globe. A box also shows neighbouring sites: write "in and around",
    or draw the border of the area on top with ax.add_geometries([poly], crs=ccrs.PlateCarree(), facecolor="none").
-3. Which sites belong to a region: there is no geocoder; the border decides. Country and state borders are in
-   the sandbox (Natural Earth, nothing to download), e.g. the sites in India:
+3. Which sites belong to a region: for a country or state the border decides (below); for a city or a point,
+   geocode gives the coordinates and nearest_sites the AERONET sites within a radius, and the map draws that
+   circle's sites with the point marked. Country and state borders are in the sandbox (Natural Earth, nothing
+   to download), e.g. the sites in India:
      import shapely, cartopy.io.shapereader as shpreader
      recs = list(shpreader.Reader(shpreader.natural_earth("10m", "cultural", "admin_0_countries")).records())
      poly = shapely.union_all([r.geometry for r in recs if r.attributes["ISO_A2_EH"] == "IN"])
@@ -34,10 +36,12 @@ checked numbers, self-explanatory, figure check); this adds what is special abou
    in the cell that draws). Scales: "110m" for the globe, "50m" for countries and continents, "10m" for states
    and cities (slower, about 10 s). Nothing else can be loaded: no rivers, no map tiles, no terrain, no
    satellite imagery. Faint LAND and OCEAN fills make small markers readable; the data stays on top (zorder).
-6. Colours: a sequential colour map for a quantity (AOD, a mean, a count), its scale capped near the 98th
-   percentile across the sites with extend="max" on the colour bar. A difference or a trend on a diverging
-   colour map centred on zero; say in the colour bar label what positive means ("AOD 500 nm trend per decade,
-   positive = increasing"). The colour bar label names the quantity, wavelength and unit, as the figures skill
+6. Colours: a sequential colour map for a quantity (AOD, a mean, a count, SSA with a scale that spans only the
+   observed range), its scale capped near the 98th percentile across the sites with extend="max" on the colour
+   bar. A difference or a trend on a diverging colour map centred on zero; say in the colour bar label what
+   positive means ("AOD 500 nm trend per decade, positive = increasing"; "night minus day AOD 500 nm, positive =
+   more aerosol at night"; "Level 1.5 minus Level 2.0"). Sites that have the product (inversions, lunar) and
+   sites that do not, when both are drawn, get two markers named in the legend; a site is never drawn as zero. The colour bar label names the quantity, wavelength and unit, as the figures skill
    asks of every axis. Several panels share one colour scale and one colour bar.
 7. Latitude and longitude labels: gl = ax.gridlines(draw_labels=True, linewidth=0.2); gl.top_labels =
    gl.right_labels = False. Gridline labels break matplotlib's automatic title placement on a GeoAxes (the

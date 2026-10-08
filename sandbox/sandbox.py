@@ -9,7 +9,7 @@ import http.client, json, os, socket, subprocess, threading, time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PARQUET      = PROJECT_ROOT / "DATA" / "PROCESSED" / "AERONET_AOD_L2_Daily_V3.parquet"
+DATA_DIR     = PROJECT_ROOT / "DATA" / "PROCESSED"     # every parquet the notebooks wrote, mounted read-only under /data
 CONV_DIR     = PROJECT_ROOT / "conversation_data"     # one sub-folder per conversation (gitignored)
 IMAGE        = "aeronet-sandbox"
 
@@ -77,7 +77,7 @@ def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
         "--cap-drop", "ALL",                                         # no privileges at all
         "--user", f"{os.getuid()}:{os.getgid()}",                    # files it writes are yours, not root's
         "-e", f"WORKSPACE_GB={workspace_gb}", "-e", f"IDLE_MINUTES={idle_minutes}",
-        "-v", f"{PARQUET}:/data/aeronet.parquet:ro",                 # the data, read-only
+        "-v", f"{DATA_DIR}:/data:ro",                                # the data folder (the four parquet tables), read-only
         "-v", f"{ws}:/workspace",                                    # the only writable place (+ the socket)
         IMAGE]
     container_id = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()

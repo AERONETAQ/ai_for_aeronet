@@ -5,9 +5,13 @@ answer (5–6). Say in one line at the end what you checked.
 2. Independent check: recompute the headline result by a second route and compare. [examples: an annual mean
    from the daily rows instead of from the monthly table; a count from .notna().sum() instead of len(); a slope
    from a sub-period; a total from a different groupby]. If the two differ beyond rounding, find out why.
-3. Plausibility: values inside their physical range [AOD 0–5, Ångström exponent −0.5–3, water 0–8 cm]; dates inside
-   the site's record; N consistent from step to step; no silent NaN drop (compare rows before and after filters);
-   a result that looks too clean or too extreme deserves one more look.
+3. Plausibility: values inside their physical range [AOD 0–5 (lunar AOD down to −0.02 on clean nights), Ångström
+   exponent −0.5–3, water 0–8 cm, SSA 0.6–1, absorption AOD 0–0.5, real refractive index 1.33–1.6, imaginary
+   0.0005–0.5, depolarization ratio 0–0.5, dV/dln r >= 0 with fine-mode median radius 0.05–0.5 µm and coarse 1–10 µm,
+   lunar phase angle −100–100°, air mass 1–7]; dates inside the site's record; N consistent from step to step;
+   no silent NaN drop (compare rows before and after filters and before and after every join of two tables);
+   lunar counts after drop_duplicates; one level and one filter set per statistic; a result that looks too clean
+   or too extreme deserves one more look.
 4. Figure check (figures skill step 5): every PNG you save is shown to you in the run_python result. Read it like
    a reviewer, from the image and not from the table: for each panel the highest and the lowest value and where
    they sit, the title period, the axis labels, the legend against the lines drawn, the n labels, and that everything drawn is explained inside the figure. They must agree

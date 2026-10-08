@@ -15,6 +15,7 @@ def environment_block():
     return ("### sandbox environment\n"
             f"python {env['python']}; packages: " + ", ".join(f"{k} {v}" for k, v in env["packages"].items()) + "\n"
             f"limits: {env['memory_limit_mb']} MB RAM, {env['cpus']} CPUs, {env['workspace_cap_gb']} GB in /workspace, no network\n"
+            f"tables mounted under /data: {', '.join(env['data']) or 'none'}\n"
             f"pre-loaded in the kernel:\n{env['preloaded']}\n")
 
 

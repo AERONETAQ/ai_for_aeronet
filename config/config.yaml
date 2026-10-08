@@ -1,13 +1,23 @@
 #  Another file: AERONET_CONFIG=/path/to/other.yaml python -m src.terminal
 
 conversation_dir: conversation_data     
-data_file: DATA/PROCESSED/AERONET_AOD_L2_Daily_V3.parquet  
+data_dir: DATA/PROCESSED                # mounted read-only at /data in the sandbox; notebooks/process_data/ write the tables into it
+data_files:                             # the tables, by the name list_sites / describe_columns take as `dataset`
+  aod_l2:  AERONET_AOD_L2_Daily_V3.parquet            # solar AOD Level 2.0, daily means (notebook 01)
+  aod_l15: AERONET_AOD_L15_Daily_V3.parquet           # solar AOD Level 1.5, daily means (notebook 02)
+  inv:     AERONET_INV_Hybrid_L2_Daily_V3.parquet     # inversions, hybrid scans, Level 2.0, daily means (notebook 03)
+  lunar:   AERONET_Lunar_AOD_L2_AllPoints_V3.parquet  # lunar AOD Level 2.0, all points (notebook 04)
 db_file: agent_turns.sqlite             
 
 keep_turns: 5                           # finished turns the model sees in full; older ones are one index line each (fetch_turn gives the rest)
 conv_cost_limit: null                   # USD for a whole conversation; null = no limit
 max_images_per_call: 4                  # PNGs attached to one run_python result; the rest are named only
-max_site_rows: 50                       # list_sites never returns more rows than this
+max_site_rows: 50                       # list_sites / nearest_sites never return more rows than this
+
+geocoder:                               # the geocode tool (VAYU v2's): place name -> coordinates, via Nominatim (OpenStreetMap)
+  url: https://nominatim.openstreetmap.org/search
+  user_agent: ai_for_aeronet (https://github.com/AERONETAQ/ai_for_aeronet)   # Nominatim asks every application to name itself
+  max_places_per_call: 10               # geocode never looks up more places than this in one call (1 request per second)
 
 
 # FOR AN EXTERNAL OPENAI-COMPATIBLE API (OpenAI, OpenRouter, Together, Groq, DeepSeek, a vLLM server ...):

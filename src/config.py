@@ -15,15 +15,18 @@ _cfg = yaml.safe_load(CONFIG_FILE.read_text())
 
 # folders (a relative path starts at the project folder; an absolute one is taken as is)
 CONV_DIR = PROJECT_ROOT / _cfg["conversation_dir"]     # one sub-folder per conversation = the sandbox's /workspace
-PARQUET  = PROJECT_ROOT / _cfg["data_file"]            # mounted read-only at /data/aeronet.parquet
+DATA_DIR   = PROJECT_ROOT / _cfg["data_dir"]                                   # mounted read-only at /data in the sandbox
+DATA_FILES = {name: DATA_DIR / f for name, f in _cfg["data_files"].items()}   # dataset name -> parquet, for list_sites / describe_columns
+PARQUET    = DATA_FILES["aod_l2"]                                              # the main table: solar AOD Level 2.0 daily means
 DB_FILE  = CONV_DIR / _cfg["db_file"]
-sb.CONV_DIR, sb.PARQUET = CONV_DIR, PARQUET            # the sandbox client has its own defaults; the config wins
+sb.CONV_DIR, sb.DATA_DIR = CONV_DIR, DATA_DIR          # the sandbox client has its own defaults; the config wins
 
 # the conversation
 KEEP_TURNS          = _cfg["keep_turns"]
 CONV_COST_LIMIT     = _cfg["conv_cost_limit"]
 MAX_IMAGES_PER_CALL = _cfg["max_images_per_call"]
 MAX_SITE_ROWS       = _cfg["max_site_rows"]
+GEOCODER            = _cfg["geocoder"]                 # url, user_agent, max_places_per_call (geocode tool)
 
 # the model
 PROVIDER         = _cfg["model"]["provider"]          # bedrock-mantle | openai-compatible

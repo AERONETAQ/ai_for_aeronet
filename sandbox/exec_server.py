@@ -44,7 +44,10 @@ last_activity = time.time()
 
 STARTUP = """
 import numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns
-DATA = "/data/aeronet.parquet"   # AERONET AOD L2 daily table (read-only)
+DATA       = "/data/AERONET_AOD_L2_Daily_V3.parquet"            # solar AOD Level 2.0, daily means, one row per site-day (1993-)
+DATA_L15   = "/data/AERONET_AOD_L15_Daily_V3.parquet"           # solar AOD Level 1.5 (near-real-time, provisional calibration), daily means
+DATA_INV   = "/data/AERONET_INV_Hybrid_L2_Daily_V3.parquet"     # inversions (hybrid scans) Level 2.0, daily means: size distribution, SSA, refractive index, fluxes
+DATA_LUNAR = "/data/AERONET_Lunar_AOD_L2_AllPoints_V3.parquet"  # lunar (night-time) AOD Level 2.0, every measurement (2014-)
 """
 
 cfg = Config()
@@ -249,7 +252,8 @@ def env():
                          "statsmodels": statsmodels.__version__, "cartopy": cartopy.__version__, "shapely": shapely.__version__,
                          "ipython": IPython.__version__},
             "memory_limit_mb": int(mem) // 1_000_000 if mem.isdigit() else mem,
-            "cpus": int(quota) / int(period) if quota.isdigit() else os.cpu_count(), "workspace_cap_gb": WORKSPACE_CAP / 1e9, "data": "/data/aeronet.parquet",
+            "cpus": int(quota) / int(period) if quota.isdigit() else os.cpu_count(), "workspace_cap_gb": WORKSPACE_CAP / 1e9,
+            "data": sorted(p.name for p in Path("/data").glob("*.parquet")),          # the tables mounted read-only under /data
             "preloaded": STARTUP.strip()}
 
 
