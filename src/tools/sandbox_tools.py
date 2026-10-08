@@ -1,4 +1,6 @@
-"""Section 4 · The tools that touch the sandbox.
+"""Section 4 · The tools that touch the sandbox: run_python and view_figure. (kernel_state and reset_kernel of
+notebook 09 were dropped on 2026-10-08: the state block and run_python's variable diff already tell the model
+what the kernel holds, and a reset frees no memory.)
 
 run_python returns a list when the cell saved PNGs: the usual text, then for each PNG one line
 `[image: name, WxH px, ≈N tokens]` followed by the image itself. At most MAX_IMAGES_PER_CALL images per cell;
@@ -6,8 +8,6 @@ the others are named so the model can view_figure one. view_figure(name) returns
 same way. image_for_model(name) builds the label line + image pair for both; the token estimate is a pixel fit
 measured on GPT-5.6 Luna on 2026-09-30 (≈ 190 + 0.94 per 1000 px).
 """
-import json
-
 from PIL import Image as PILImage
 from pydantic_ai.messages import BinaryImage
 import sandbox as sb
@@ -29,8 +29,16 @@ def image_for_model(name):
 def run_python(code: str, timeout: int = 60) -> str | list:
     '''Run Python code in this conversation's sandbox (a persistent IPython kernel) and return what happened.
     Pre-imported: numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns.
-    DATA = path of the AERONET AOD Level 2 daily parquet (read-only; Always read a column subset, the full table is ~1 GB; The system where the code executes is very lightweight).
-    Variables persist between calls. No network. 2 GB RAM, 2 CPUs.
+    Four read-only parquet tables under /data, their paths pre-set: DATA (solar AOD Level 2.0 daily means), DATA_L15
+    (solar AOD Level 1.5 daily means), DATA_INV (inversions, hybrid scans, Level 2.0 daily means) and DATA_LUNAR
+    (lunar AOD Level 2.0, every measurement); the data dictionary says what each holds. Always read a column subset,
+    filtered by site (pd.read_parquet(path, columns=[...], filters=[...])): a daily table is about 1 GB in memory,
+    the lunar table several GB, and the system where the code executes is very lightweight.
+    Variables persist between calls.
+    Limits: no network and no files outside /data (read-only) and /workspace; memory, CPU and storage caps as in
+    the sandbox environment block of the system prompt, and a cell that exceeds them or the timeout (default 60 s)
+    is killed, the variables of a killed kernel are gone (files stay); a failed cell leaves nothing behind and is
+    re-run from scratch; nothing is shown beyond 4000 characters per field and 4 images per call.
     What comes back, like a notebook cell:
     - stdout: everything you print(); stderr: warnings.
     - result: the value of the last expression if it is not an assignment (a DataFrame comes back as shape, dtypes,
@@ -42,7 +50,14 @@ def run_python(code: str, timeout: int = 60) -> str | list:
       auto-saved as fig_NNN.png. No plt.show(). All PNG names written by the cell are returned under figures,
       and the images themselves are shown to you right after (the first 4 per call): look at them for double checking or verification.
     - new/changed variables with type and shape, files written, elapsed time and memory.
-    Write any export (parquet, csv, png) under /workspace/.'''
+    Write any export (parquet, csv, png) under /workspace/.
+
+    Args:
+        code: the Python code of one cell, as in a notebook: one step (load, aggregate, test, check or plot), at
+            most about 20 lines, ending with the object to show or a print of it.
+        timeout: seconds the cell may run before it is killed (default 60, at most 110: the tool call itself is cut
+            off at 120 s, so a longer step is split into cells, never given a bigger timeout).
+    '''
     start_sandbox_if_needed()
     r = sb.exec_code(current.ID, code, timeout)
     out = []
@@ -75,21 +90,17 @@ def view_figure(name: str) -> str | list:
     '''Look at one PNG from /workspace, e.g. a figure made in an earlier question (earlier answers name their files).
     Do NOT use it for figures made in this question: every run_python result already shows you the PNGs it saved,
     and once you have seen an image it stays in front of you. Use it only when the question depends on what an
-    older figure shows and the earlier answer does not already say it. Each image costs a few hundred tokens.'''
+    older figure shows and the earlier answer does not already say it. Each image costs a few hundred tokens.
+    Limits: PNG files of this conversation's /workspace only (no CSV, no other conversation); a file the storage
+    guard deleted is gone; it shows the image, it does not read numbers off it for you.
+
+    Args:
+        name: the PNG's file name in /workspace as an earlier answer gave it ("gsfc_annual_aod500.png"; a
+            "/workspace/" or "sandbox:" prefix is accepted).
+    '''
     name = name.replace("sandbox:", "").replace("/workspace/", "")    # accept the full path too
     if not name.lower().endswith(".png"):
         return f"{name}: only PNG files can be viewed"
     if not (current.WORKSPACE / name).exists():
         return f"{name}: no such file in /workspace (check the name in the earlier answer). The file could also have been deleted! or maybe check the spelling of the name."
     return image_for_model(name)
-
-
-def kernel_state() -> str:
-    '''Variables (type and shape), files in /workspace and memory use of this conversation's sandbox.'''
-    return json.dumps(sb.state(current.ID), indent=1)
-
-
-def reset_kernel() -> str:
-    '''Delete all variables and open figures. Files in /workspace are kept.'''
-    sb.reset(current.ID)
-    return "kernel reset: no variables"

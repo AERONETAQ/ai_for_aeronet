@@ -48,11 +48,24 @@ def check_slot():
                            "Stop one with /stop in its terminal, or raise the limit.")
 
 
+NOTEBOOK_OF = {"aod_l2": "01", "aod_l15": "02", "inv": "03", "lunar": "04"}   # which notebooks/process_data/ notebook writes each table
+
+
+def check_tables():
+    """Every table of config data_files must exist before a sandbox mounts DATA/PROCESSED: a missing one would
+    only surface later, inside a cell, as a FileNotFoundError."""
+    missing = [f"{path.name} (run notebooks/process_data/{NOTEBOOK_OF.get(name, '?')}_*.ipynb)"
+               for name, path in config.DATA_FILES.items() if not path.exists()]
+    if missing:
+        raise RuntimeError("tables missing from DATA/PROCESSED: " + "; ".join(missing))
+
+
 def start_sandbox_if_needed():
     """Start the sandbox when it is not running, remembering why the previous one stopped."""
     global LAST_STOP_REASON
     if sb.running(current.ID):
         return
+    check_tables()
     check_slot()
     killed_file = current.WORKSPACE / "_killed.txt"          # the sandbox writes its reason here when it stops itself
     if killed_file.exists():

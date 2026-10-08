@@ -5,11 +5,11 @@ the 4 endpoints of exec_server.py (exec / state / reset / env) over its Unix soc
 Folders:  <repo>/conversation_data/<conversation_id>/  = the container's /workspace  (gitignored)
 Container name = conversation_id.
 """
-import http.client, json, os, socket, subprocess, threading, time
+import hashlib, http.client, json, os, socket, subprocess, threading, time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PARQUET      = PROJECT_ROOT / "DATA" / "PROCESSED" / "AERONET_AOD_L2_Daily_V3.parquet"
+DATA_DIR     = PROJECT_ROOT / "DATA" / "PROCESSED"     # every parquet the notebooks wrote, mounted read-only under /data
 CONV_DIR     = PROJECT_ROOT / "conversation_data"     # one sub-folder per conversation (gitignored)
 IMAGE        = "aeronet-sandbox"
 
@@ -58,15 +58,38 @@ def _host_storage_guard(conv_id, container_id, cap):
         return
 
 
+BUILD_INPUTS = ["Dockerfile", "exec_server.py", "download_natural_earth.py"]   # what the image is made of
+
+
+def build_hash():
+    """One hash over the files the image is built from: changes when any of them changes."""
+    h = hashlib.sha256()
+    for name in BUILD_INPUTS:
+        h.update((Path(__file__).parent / name).read_bytes())
+    return h.hexdigest()[:16]
+
+
+def ensure_image():
+    """Build the image when it is missing or was built from other files (the hash is a label on the image).
+    After a git pull that touched sandbox/, the next start rebuilds; nothing to remember."""
+    out = subprocess.run(["docker", "image", "inspect", IMAGE, "--format", '{{index .Config.Labels "aeronet.build_hash"}}'],
+                         capture_output=True, text=True)
+    current_hash = build_hash()
+    if out.returncode == 0 and out.stdout.strip() == current_hash:
+        return
+    why = "first run" if out.returncode != 0 else "sandbox/ changed since the image was built"
+    print(f"building the {IMAGE} image ({why}, a few minutes) ...")
+    subprocess.run(["docker", "build", "-t", IMAGE, "--label", f"aeronet.build_hash={current_hash}",
+                    str(Path(__file__).parent)], check=True)
+
+
 def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
     """docker run with every limit; returns /env once the server answers."""
     ws = CONV_DIR / conv_id
     ws.mkdir(parents=True, exist_ok=True)
     (ws / "_killed.txt").unlink(missing_ok=True)
     stop(conv_id)                                                    # never two containers for one conversation
-    if subprocess.run(["docker", "image", "inspect", IMAGE], capture_output=True).returncode != 0:
-        print(f"building the {IMAGE} image (first run only, a few minutes) ...")
-        subprocess.run(["docker", "build", "-t", IMAGE, str(Path(__file__).parent)], check=True)
+    ensure_image()
     cmd =["docker", "run", "-d", "--rm", "--name", conv_id,
         "--network", "none",                                         # no internet, no LAN
         "--memory", memory, "--memory-swap", memory,                 # RAM cap, no swap
@@ -77,7 +100,7 @@ def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
         "--cap-drop", "ALL",                                         # no privileges at all
         "--user", f"{os.getuid()}:{os.getgid()}",                    # files it writes are yours, not root's
         "-e", f"WORKSPACE_GB={workspace_gb}", "-e", f"IDLE_MINUTES={idle_minutes}",
-        "-v", f"{PARQUET}:/data/aeronet.parquet:ro",                 # the data, read-only
+        "-v", f"{DATA_DIR}:/data:ro",                                # the data folder (the four parquet tables), read-only
         "-v", f"{ws}:/workspace",                                    # the only writable place (+ the socket)
         IMAGE]
     container_id = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
