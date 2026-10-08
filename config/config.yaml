@@ -38,7 +38,7 @@ model:
   max_tokens: 32000
   prompt_cache_key: aeronet:v1          
   update_prices: true
-  prices: {input: null, cache_read: null, cache_write: null, output: null}
+  # prices: {input: 1.10, cache_read: 0.11, cache_write: 1.10, output: 6.60}
 
 # model:
 #   provider: bedrock-mantle              # bedrock-mantle (GPT-5.6 Luna, Responses API, bearer token from the instance role)
