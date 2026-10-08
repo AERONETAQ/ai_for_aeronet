@@ -47,8 +47,8 @@ model:
     output: null                        # output, reasoning included (1.32)
 
 limits:                                 # per nquestion (Pydantic AI UsageLimits); the loop stops when one is hit
-  request_limit: 30                     # model calls per question (loop depth)
-  tool_calls_limit: 50                  # successful tool executions per question
+  request_limit: 50                     # model calls per question (loop depth)
+  tool_calls_limit: 80                  # successful tool executions per question
   total_tokens_limit: null            # in + out, cumulative over the question; a bad usage metric as it counts cheap cached inputs the same as other tokens (includes all tokens)
   cost_limit: 0.3                      # USD per question
 
@@ -56,7 +56,7 @@ tool_timeout: 120                       # seconds; a slower tool = failure + ret
 retries: 2                              # malformed final_result / failed validator: how often the model may try again
 
 sandbox:                                # docker run limits (sandbox/sandbox.py start())
-  memory: 2g
+  memory: 6g
   cpus: 2
   workspace_gb: 1
   idle_minutes: 60                      # the container stops itself after this long without a call
@@ -67,7 +67,7 @@ terminal:
   verbose:                              # what the terminal prints; true/false each. /verbose <name> toggles one for the session
     steps: true                         # one line per step: the sentence the model writes before its tool calls
     step_tokens: true                   # under each step: input (uncached, cache read, cache write), output (reasoning), cost of that call
-    tool_calls: true                   # every tool call with its arguments and every tool result, as the notebook prints them
+    tool_calls: false                   # every tool call with its arguments and every tool result, as the notebook prints them
     summary: true                       # under the answer: the model's one-line summary (its line in the index of earlier turns)
     kept_variables: true                # under the answer: the variables the model kept in the kernel, with their meaning
     files: true                         # under the answer: the files the turn wrote, as paths on this machine

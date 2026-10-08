@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from aws_bedrock_token_generator import provide_token
 from pydantic_ai import Agent, UsageLimits, ModelRetry
 from pydantic_ai.models.bedrock_mantle import BedrockMantleResponsesModel, BedrockMantleProvider
-from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModelSettings
+from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModelSettings, OpenAIResponsesModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 
@@ -56,6 +56,17 @@ def make_model():
                                                   openai_reasoning_effort=config.REASONING_EFFORT,
                                                   openai_prompt_cache_key=config.PROMPT_CACHE_KEY),
         )
+
+    if config.PROVIDER == "openai-responses":
+        # Same settings as bedrock-mantle, but a plain OpenAI provider with a static key
+        return OpenAIResponsesModel(
+            config.MODEL_ID,
+            provider=OpenAIProvider(base_url=config.BASE_URL, api_key=config.API_KEY),
+            settings=OpenAIResponsesModelSettings(max_tokens=config.MAX_TOKENS,
+                                                  openai_reasoning_effort=config.REASONING_EFFORT,
+                                                  openai_prompt_cache_key=config.PROMPT_CACHE_KEY),
+        )
+    
     if config.PROVIDER == "openai-compatible":
         return OpenAIChatModel(
             config.MODEL_ID,
