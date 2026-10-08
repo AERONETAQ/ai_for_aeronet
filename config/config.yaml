@@ -12,7 +12,8 @@ max_site_rows: 50                       # list_sites never returns more rows tha
 
 ## THIS IS FOR NASA ENDPOINT
 model:
-  provider: openai-responses           
+  provider: openai-responses      
+  region: us-west-2     
   base_url: https://proxy.fast.luna.nasa.gov
   api_key: ${OPENAI_API_KEY}            # export OPENAI_API_KEY=ABC in terminal to sync API key with NASA
   model_id: gpt-5.6-luna
