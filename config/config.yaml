@@ -10,36 +10,36 @@ max_images_per_call: 4                  # PNGs attached to one run_python result
 max_site_rows: 50                       # list_sites never returns more rows than this
 
 
-### THIS IS FOR NASA ENDPOINT
-# model:
-#   provider: openai-responses           
-#   base_url: https://proxy.fast.luna.nasa.gov
-#   api_key: ${OPENAI_API_KEY}            # export OPENAI_API_KEY=ABC in terminal to sync API key with NASA
-#   model_id: claude-sonnet-5-thinking # gpt-5.6-luna
-#   reasoning_effort: high                
-#   max_tokens: 32000
-#   prompt_cache_key: aeronet:v1          
-# prices: {input: 1.10, cache_read: 0.11, cache_write: 1.10, output: 6.60}
-
+## THIS IS FOR NASA ENDPOINT
 model:
-  provider: openai-responses # bedrock-mantle              # bedrock-mantle (GPT-5.6 Luna, Responses API, bearer token from the instance role)
-                                        # | openai-compatible (LM Studio, Ollama, vLLM ...: chat completions at base_url, api_key below)
-  region: us-west-2
-  base_url: https://bedrock-runtime.{region}.amazonaws.com/openai/v1   # LM Studio: http://localhost:1234/v1
-  api_key: ${BEDROCK_API_KEY}                     # openai-compatible only; LM Studio accepts anything
-  model_id: us.openai.gpt-6-luna      # LM Studio: the model name shown in its server tab, e.g. qwen2.5-7b-instruct
-  reasoning_effort: high                # none | low | medium | high | xhigh | max (bedrock-mantle only)
-  max_tokens: 32000                     # output tokens of ONE model call (one step), not of the whole question
-  prompt_cache_key: aeronet:v1          # bedrock-mantle only
-  update_prices: true                   # download the latest genai-prices table at startup and every hour;
-                                        # false = the table installed with the package (frozen, reproducible)
-  prices:                               # USD per million tokens. null = Pydantic AI's built-in rate for this model at this
-                                        # endpoint. A value replaces that rate everywhere: step cost, stored cost, cost limits.
-                                        # Built-in Luna rates double above 272k tokens in one call; a value here is flat.
-    input: null                         # uncached input            (Luna on Bedrock built-in: 0.22)
-    cache_read: null                    # input read from the cache (0.022)
-    cache_write: null                   # input written to the cache (0.275)
-    output: null                        # output, reasoning included (1.32)
+  provider: openai-responses           
+  base_url: https://proxy.fast.luna.nasa.gov
+  api_key: ${OPENAI_API_KEY}            # export OPENAI_API_KEY=ABC in terminal to sync API key with NASA
+  model_id: gpt-5.6-luna
+  reasoning_effort: high                
+  max_tokens: 32000
+  prompt_cache_key: aeronet:v1          
+prices: {input: 1.10, cache_read: 0.11, cache_write: 1.10, output: 6.60}
+
+# model:
+#   provider: openai-responses # bedrock-mantle              # bedrock-mantle (GPT-5.6 Luna, Responses API, bearer token from the instance role)
+#                                         # | openai-compatible (LM Studio, Ollama, vLLM ...: chat completions at base_url, api_key below)
+#   region: us-west-2
+#   base_url: https://bedrock-runtime.{region}.amazonaws.com/openai/v1   # LM Studio: http://localhost:1234/v1
+#   api_key: ${BEDROCK_API_KEY}                     # openai-compatible only; LM Studio accepts anything
+#   model_id: us.openai.gpt-6-luna      # LM Studio: the model name shown in its server tab, e.g. qwen2.5-7b-instruct
+#   reasoning_effort: high                # none | low | medium | high | xhigh | max (bedrock-mantle only)
+#   max_tokens: 32000                     # output tokens of ONE model call (one step), not of the whole question
+#   prompt_cache_key: aeronet:v1          # bedrock-mantle only
+#   update_prices: true                   # download the latest genai-prices table at startup and every hour;
+#                                         # false = the table installed with the package (frozen, reproducible)
+#   prices:                               # USD per million tokens. null = Pydantic AI's built-in rate for this model at this
+#                                         # endpoint. A value replaces that rate everywhere: step cost, stored cost, cost limits.
+#                                         # Built-in Luna rates double above 272k tokens in one call; a value here is flat.
+#     input: null                         # uncached input            (Luna on Bedrock built-in: 0.22)
+#     cache_read: null                    # input read from the cache (0.022)
+#     cache_write: null                   # input written to the cache (0.275)
+#     output: null                        # output, reasoning included (1.32)
 
 limits:                                 # per nquestion (Pydantic AI UsageLimits); the loop stops when one is hit
   request_limit: 50                     # model calls per question (loop depth)
