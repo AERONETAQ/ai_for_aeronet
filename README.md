@@ -34,6 +34,10 @@ cd ai_for_aeronet
 python -m src.terminal
 ```
 
+The sandbox image builds itself on the first start and rebuilds whenever a file in `sandbox/` changed since the
+image was built (its build hash is a label on the image), so a `git pull` needs no manual `docker build`. A start
+refuses to run while one of the four tables is missing from `DATA/PROCESSED/` and names the notebook that writes it.
+
 `/new <name>` creates a conversation (folder + docker container of that name) and starts its sandbox,
 `/load <name>` opens one, starts its sandbox and shows its last `keep_turns` turns, `/help` lists everything else.
 A question is any line that does not start with `/`. The terminal says when a sandbox is being set up, when it was
