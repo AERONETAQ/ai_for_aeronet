@@ -106,19 +106,75 @@ def running(conv_id):
     return out.stdout.strip() != ""
 
 
-class UnixHTTP(http.client.HTTPConnection):                          # HTTP over the socket file in the workspace
-    def __init__(self, path, timeout):
+# class UnixHTTP(http.client.HTTPConnection):                          # HTTP over the socket file in the workspace
+#     def __init__(self, path, timeout):
+#         super().__init__("localhost", timeout=timeout)
+#         self.path = path
+
+#     def connect(self):
+#         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+#         self.sock.settimeout(self.timeout)
+#         self.sock.connect(self.path)
+
+RELAY = r"""
+import socket, sys, threading
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect('/workspace/exec.sock')
+
+def upstream():
+    # host -> server: forward whatever arrives on stdin
+    while True:
+        d = sys.stdin.buffer.read1(65536)
+        if not d:
+            break
+        s.sendall(d)
+    s.shutdown(socket.SHUT_WR)
+
+threading.Thread(target=upstream, daemon=True).start()
+
+# server -> host: forward responses to stdout until the server closes
+while True:
+    d = s.recv(65536)
+    if not d:
+        break
+    sys.stdout.buffer.write(d)
+    sys.stdout.buffer.flush()
+"""
+
+
+class DockerExecHTTP(http.client.HTTPConnection):
+    """HTTP over the container's Unix socket, tunneled through `docker exec -i`.
+    Works on Docker Desktop for Mac, where host -> container Unix sockets do not."""
+
+    def __init__(self, container: str, timeout: float):
         super().__init__("localhost", timeout=timeout)
-        self.path = path
+        self.container = container
+        self.proc = None
 
     def connect(self):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.settimeout(self.timeout)
-        self.sock.connect(self.path)
+        # One end of the pair becomes docker exec's stdin+stdout; the other is our "socket"
+        ours, theirs = socket.socketpair()
+        self.proc = subprocess.Popen(
+            ["docker", "exec", "-i", self.container, "python", "-u", "-c", RELAY],
+            stdin=theirs, stdout=theirs, stderr=subprocess.DEVNULL,
+        )
+        theirs.close()                 # the child process holds its own copy
+        ours.settimeout(self.timeout)  # keeps the existing timeout semantics
+        self.sock = ours
+
+    def close(self):
+        super().close()
+        # Don't leave relay processes behind
+        if self.proc and self.proc.poll() is None:
+            self.proc.kill()
+            self.proc.wait()
+        self.proc = None
 
 
 def call(conv_id, endpoint, payload=None, timeout=30):
-    conn = UnixHTTP(str(CONV_DIR / conv_id / "exec.sock"), timeout)
+    # conn = UnixHTTP(str(CONV_DIR / conv_id / "exec.sock"), timeout)
+    conn = DockerExecHTTP(conv_id, timeout)
+
     if payload is None:                                              # GET: no body, the server never reads one
         conn.request("GET", endpoint)
     else:

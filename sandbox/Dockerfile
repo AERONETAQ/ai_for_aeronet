@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir \
     scipy==1.18.1 \
     statsmodels==0.15.0 \
     ipython==9.17.1 \
-    cartopy==0.25.0 \
+    cartopy==0.26.0 \
     shapely==2.1.2 \
     pyproj==3.7.2 \
     pyshp==3.0.2.post1

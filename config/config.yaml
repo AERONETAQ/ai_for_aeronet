@@ -1,7 +1,7 @@
 #  Another file: AERONET_CONFIG=/path/to/other.yaml python -m src.terminal
 
 conversation_dir: conversation_data     
-data_file: DATA/PROCESSED/AERONET_AOD_L2_Daily_V3.parquet  
+data_file: /Users/sneupane/Desktop/ai_for_aeronet/DATA/PROCESSED/AERONET_AOD_L2_Daily_V3.parquet  
 db_file: agent_turns.sqlite             
 
 keep_turns: 5                           # finished turns the model sees in full; older ones are one index line each (fetch_turn gives the rest)
