@@ -5,13 +5,57 @@ the 4 endpoints of exec_server.py (exec / state / reset / env) over its Unix soc
 Folders:  <repo>/conversation_data/<conversation_id>/  = the container's /workspace  (gitignored)
 Container name = conversation_id.
 """
-import http.client, json, os, socket, subprocess, time
+import http.client, json, os, socket, subprocess, threading, time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET      = PROJECT_ROOT / "DATA" / "PROCESSED" / "AERONET_AOD_L2_Daily_V3.parquet"
 CONV_DIR     = PROJECT_ROOT / "conversation_data"     # one sub-folder per conversation (gitignored)
 IMAGE        = "aeronet-sandbox"
+
+
+def _folder_bytes(folder):
+    total = 0
+    for root, _, names in os.walk(folder):
+        for n in names:
+            total += os.lstat(os.path.join(root, n)).st_size    # lstat: a symlink counts as itself, never as its target
+    return total
+
+
+def _alive(container_id):
+    out = subprocess.run(["docker", "ps", "-q", "--no-trunc", "--filter", f"id={container_id}"], capture_output=True, text=True)
+    return out.stdout.strip() != ""
+
+
+def _host_storage_guard(conv_id, container_id, cap):
+    """Backstop for the storage watchdog inside exec_server.py. That one runs in the same process as the model's
+    code, which could in principle switch it off; this one runs in the terminal's own process, outside the
+    container, once a second, for as long as the container it was started for is up."""
+    ws = CONV_DIR / conv_id
+    tick = 0
+    while True:
+        time.sleep(1)
+        tick += 1
+        if tick % 10 == 0 and not _alive(container_id):                 # idle stop, OOM, stop(): nothing left to guard
+            return
+        used = _folder_bytes(ws)
+        if used <= cap:
+            continue
+        reason = f"storage cap exceeded: /workspace went over {cap/1e9:g} GB. Sandbox killed by the host"
+        (ws / "_killed.txt").write_text(reason)                          # written BEFORE the kill: exec_code reads it the moment the socket dies
+        stop(conv_id)                                                    # docker rm -f: immediate, nothing inside can block it
+        used = _folder_bytes(ws)                                         # measure again now that nothing else writes or deletes
+        deleted = []
+        keep = {ws / "exec.sock", ws / "_killed.txt"}
+        for p in sorted((p for p in ws.rglob("*") if p.is_file() and not p.is_symlink() and p not in keep),
+                        key=lambda p: p.lstat().st_mtime, reverse=True):  # newest first, like exec_server
+            if used <= cap:
+                break
+            used -= p.lstat().st_size
+            p.unlink()
+            deleted.append(p.name)
+        (ws / "_killed.txt").write_text(f"{reason}; newest files deleted to get back under the cap: {deleted}")
+        return
 
 
 def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
@@ -36,7 +80,8 @@ def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
         "-v", f"{PARQUET}:/data/aeronet.parquet:ro",                 # the data, read-only
         "-v", f"{ws}:/workspace",                                    # the only writable place (+ the socket)
         IMAGE]
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
+    container_id = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+    threading.Thread(target=_host_storage_guard, args=(conv_id, container_id, int(workspace_gb * 1e9)), daemon=True).start()
     for _ in range(100):                                             # wait until the server answers
         try:
             return env(conv_id)
