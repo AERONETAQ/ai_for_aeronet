@@ -6,23 +6,23 @@ Level 1.5 daily means), aerosol inversion products (hybrid scans, Level 2.0 dail
 ## Layout
 
 ```
-config/config.yaml   every setting: folders and the four data tables, keep_turns, model, limits, sandbox, container limit, terminal verbose
+config/config.yaml   every setting: folders and the 13 data tables, keep_turns, model, limits, sandbox, container limit, terminal verbose
 src/                 notebook 09 as a package (same code, one module per notebook section) + the terminal
   conversation/      store (SQLite), sandbox state, context (what the model sees), manage (new/load/delete/list)
   tools/             run_python, view_figure · list_sites, describe_columns (dataset=...) · geocode (VAYU v2's, Nominatim),
                      nearest_sites, site_coverage · fetch_turn
   skills/            one markdown file per skill; the number prefix is the order in the system prompt
-  prompt/            rules, data dictionary (the four tables), the system-prompt builder
+  prompt/            rules, data dictionary (the 13 tables), the system-prompt builder
   agent/             Turn schema + model + agent (build), ask() (run), token check (tokens)
   terminal/          python -m src.terminal
 sandbox/             the docker image (Dockerfile, exec_server.py, download_natural_earth.py: offline Natural Earth
                      shapes for cartopy maps) and its host-side client (sandbox.py)
 notebooks/           01 data download … 09 agent with long conversations (the terminal is 09 moved into src/)
-  process_data/      one notebook per table: 01 solar AOD Level 2.0 daily, 02 solar AOD Level 1.5 daily,
-                     03 inversions (hybrid scans) Level 2.0 daily, 04 lunar AOD Level 2.0 all points; each downloads the
-                     AERONET archive, merges the station files and writes one parquet into DATA/PROCESSED/
-DATA/                RAW/ the extracted station files, PROCESSED/ the four parquet tables (gitignored); PROCESSED/ is
-                     mounted read-only at /data in the sandbox (DATA, DATA_L15, DATA_INV, DATA_LUNAR in the kernel)
+  process_data/      05 converts any AERONET product (a file or a folder of station files) into one parquet in
+                     DATA/PROCESSED/: uncomment one product, run, repeat for each of the 13 tables. 01–04 are the
+                     earlier one-notebook-per-table versions (they also download the archives)
+DATA/                RAW/ the extracted station files, PROCESSED/ the 13 parquet tables (gitignored); PROCESSED/ is
+                     mounted read-only at /data in the sandbox (DATA, DATA_L15, DATA_MONTHLY, DATA_LUNAR, DATA_INV, DATA_ALM ... in the kernel)
 conversation_data/   one folder per conversation = that sandbox's /workspace, plus agent_turns.sqlite (gitignored)
 ```
 
@@ -36,7 +36,7 @@ python -m src.terminal
 
 The sandbox image builds itself on the first start and rebuilds whenever a file in `sandbox/` changed since the
 image was built (its build hash is a label on the image), so a `git pull` needs no manual `docker build`. A start
-refuses to run while one of the four tables is missing from `DATA/PROCESSED/` and names the notebook that writes it.
+refuses to run while one of the 13 tables is missing from `DATA/PROCESSED/` and names the notebook that writes it.
 
 `/new <name>` creates a conversation (folder + docker container of that name) and starts its sandbox,
 `/load <name>` opens one, starts its sandbox and shows its last `keep_turns` turns, `/help` lists everything else.

@@ -48,16 +48,15 @@ def check_slot():
                            "Stop one with /stop in its terminal, or raise the limit.")
 
 
-NOTEBOOK_OF = {"aod_l2": "01", "aod_l15": "02", "inv": "03", "lunar": "04"}   # which notebooks/process_data/ notebook writes each table
+NOTEBOOK = "05_convert_AERONET_files_to_parquet.ipynb"       # the notebook in notebooks/process_data/ that writes every table
 
 
 def check_tables():
     """Every table of config data_files must exist before a sandbox mounts DATA/PROCESSED: a missing one would
     only surface later, inside a cell, as a FileNotFoundError."""
-    missing = [f"{path.name} (run notebooks/process_data/{NOTEBOOK_OF.get(name, '?')}_*.ipynb)"
-               for name, path in config.DATA_FILES.items() if not path.exists()]
+    missing = [path.name for path in config.DATA_FILES.values() if not path.exists()]
     if missing:
-        raise RuntimeError("tables missing from DATA/PROCESSED: " + "; ".join(missing))
+        raise RuntimeError(f"tables missing from DATA/PROCESSED (run notebooks/process_data/{NOTEBOOK} for each): " + ", ".join(missing))
 
 
 def start_sandbox_if_needed():

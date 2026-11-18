@@ -100,8 +100,8 @@ def haversine_km(lat1, lon1, lat2, lon2):
 def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, dataset: Dataset = "aod_l2") -> str:
     '''AERONET sites within max_km of a point (e.g. the coordinates geocode returned), nearest first: name,
     distance in km, latitude, longitude, elevation (m), first and last day with data and the number of days with
-    data in that table. dataset: aod_l2 (default), aod_l15, inv, lunar. At most 50 rows; a wider circle or a
-    region is a run_python selection instead.
+    data in that table. dataset names one of the 13 tables of the data dictionary (default aod_l2). At most 50
+    rows; a wider circle or a region is a run_python selection instead.
     Limits: straight-line great-circle distance on a sphere (within 0.5 %), from the site's first-row
     coordinates; distance says nothing about representativeness: a mountain site or a coastal site 30 km away
     sees different air (compare elevations, site_comparison skill); one table per call, so a site absent from
@@ -112,8 +112,11 @@ def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, 
         lon: longitude of the point in decimal degrees, east positive, west negative.
         max_km: radius of the circle around the point in kilometres (default 300).
         limit: how many rows to return, nearest first; never more than 50.
-        dataset: the table whose sites are searched: aod_l2 (solar AOD Level 2.0 daily means, the default),
-            aod_l15 (solar AOD Level 1.5 daily means), inv (hybrid inversions), lunar (lunar AOD all points).
+        dataset: the table whose sites are searched. Solar AOD: aod_l2 (Level 2.0 daily means, the default),
+            aod_l15 (Level 1.5 daily), aod_l2_monthly, aod_l15_monthly. Lunar AOD, all points: lunar (Level 2.0),
+            lunar_l15 (Level 1.5). Hybrid-scan inversions: inv (Level 2.0 daily), inv_monthly, inv_l15_monthly.
+            Almucantar-scan inversions: alm (Level 2.0, all points), alm_l15 (Level 1.5, all points),
+            alm_l15_daily, alm_l15_monthly.
     '''
     limit = min(limit, MAX_SITE_ROWS)
     s = _sites(dataset).copy()
@@ -128,13 +131,15 @@ def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, 
 
 
 def site_coverage(site: str) -> str:
-    '''What the four tables hold for one site (exact name from list_sites): per table the first and last day with
-    data and the number of days with data, or "not in this table". One call answers which of solar Level 2.0,
-    Level 1.5, inversions and lunar data exist for the site and over which period, before any cross-table analysis.
-    The first call per table reads its site list once (the lunar table takes about 20 s).
+    '''What the 13 tables hold for one site (exact name from list_sites): per table the first and last day with
+    data and the number of days with data, or "not in this table". One call answers which of solar AOD (Level 2.0
+    and 1.5, daily and monthly), lunar AOD (Level 2.0 and 1.5), hybrid inversions and almucantar inversions exist
+    for the site and over which period, before any cross-table analysis.
+    The first call reads the site list of every table once (a few seconds per table), later calls are instant.
     Limits: exact, case-sensitive site name (list_sites gives it); spans and day counts per table, not per
-    wavelength or product (describe_columns) and not per year; in the lunar table "days" are UTC dates with a
-    measurement, not nights; a span says nothing about gaps inside it.
+    wavelength or product (describe_columns) and not per year; in a monthly table "days" are months with data;
+    in the all-points tables (lunar, lunar_l15, alm, alm_l15) "days" are UTC dates with a measurement or
+    retrieval, not nights; a span says nothing about gaps inside it.
 
     Args:
         site: exact site name from list_sites (case-sensitive, with underscores: "Mauna_Loa").
@@ -144,7 +149,8 @@ def site_coverage(site: str) -> str:
         s = _sites(name)
         if site in s.index:
             r = s.loc[site]
-            lines.append(f"  {name:8} {r['first']} -> {r['last']}  {int(r['days']):>6} days with data  (lat {r['lat']}, lon {r['lon']}, {int(r['elev_m'])} m)")
+            unit = "months" if name.endswith("monthly") else "days"
+            lines.append(f"  {name:16} {r['first']} -> {r['last']}  {int(r['days']):>6} {unit} with data  (lat {r['lat']}, lon {r['lon']}, {int(r['elev_m'])} m)")
         else:
-            lines.append(f"  {name:8} not in this table")
+            lines.append(f"  {name:16} not in this table")
     return "\n".join(lines)

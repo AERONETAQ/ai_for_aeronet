@@ -100,7 +100,7 @@ def start(conv_id, memory="2g", cpus=2, workspace_gb=1, idle_minutes=60):
         "--cap-drop", "ALL",                                         # no privileges at all
         "--user", f"{os.getuid()}:{os.getgid()}",                    # files it writes are yours, not root's
         "-e", f"WORKSPACE_GB={workspace_gb}", "-e", f"IDLE_MINUTES={idle_minutes}",
-        "-v", f"{DATA_DIR}:/data:ro",                                # the data folder (the four parquet tables), read-only
+        "-v", f"{DATA_DIR}:/data:ro",                                # the data folder (the parquet tables), read-only
         "-v", f"{ws}:/workspace",                                    # the only writable place (+ the socket)
         IMAGE]
     container_id = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()

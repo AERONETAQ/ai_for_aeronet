@@ -43,11 +43,25 @@ CLIP = 4000                                                             # max ch
 last_activity = time.time()
 
 STARTUP = """
-import numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns
-DATA       = "/data/AERONET_AOD_L2_Daily_V3.parquet"            # solar AOD Level 2.0, daily means, one row per site-day (1993-)
-DATA_L15   = "/data/AERONET_AOD_L15_Daily_V3.parquet"           # solar AOD Level 1.5 (near-real-time, provisional calibration), daily means
-DATA_INV   = "/data/AERONET_INV_Hybrid_L2_Daily_V3.parquet"     # inversions (hybrid scans) Level 2.0, daily means: size distribution, SSA, refractive index, fluxes
-DATA_LUNAR = "/data/AERONET_Lunar_AOD_L2_AllPoints_V3.parquet"  # lunar (night-time) AOD Level 2.0, every measurement (2014-)
+import numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns, duckdb
+duckdb.sql("SET memory_limit='2GB'; SET threads=2; SET temp_directory=''")   # a query that needs more fails with an error instead of killing the kernel; nothing spills to disk
+# solar AOD, one row per site and day (daily) or per site and month (monthly)
+DATA                 = "/data/AERONET_AOD_L2_Daily_V3.parquet"                  # Level 2.0 daily means (1993-), the reference
+DATA_L15             = "/data/AERONET_AOD_L15_Daily_V3.parquet"                 # Level 1.5 daily means (provisional, reaches the last weeks)
+DATA_MONTHLY         = "/data/AERONET_AOD_L2_Monthly_V3.parquet"                # Level 2.0 monthly means (AERONET's own)
+DATA_L15_MONTHLY     = "/data/AERONET_AOD_L15_Monthly_V3.parquet"               # Level 1.5 monthly means
+# lunar (night-time) AOD, one row per measurement
+DATA_LUNAR           = "/data/AERONET_Lunar_AOD_L2_AllPoints_V3.parquet"        # Level 2.0, all points (millions of rows)
+DATA_LUNAR_L15       = "/data/AERONET_Lunar_AOD_L15_AllPoints_V3.parquet"       # Level 1.5, all points (millions of rows)
+# inversions from hybrid sky scans (2014-): size distribution, SSA, refractive index, fluxes
+DATA_INV             = "/data/AERONET_INV_Hybrid_L2_Daily_V3.parquet"           # Level 2.0 daily means
+DATA_INV_MONTHLY     = "/data/AERONET_INV_Hybrid_L2_Monthly_V3.parquet"         # Level 2.0 monthly means
+DATA_INV_L15_MONTHLY = "/data/AERONET_INV_Hybrid_L15_Monthly_V3.parquet"        # Level 1.5 monthly means
+# inversions from almucantar sky scans (1993-), the same products
+DATA_ALM             = "/data/AERONET_INV_Almucantar_L2_AllPoints_V3.parquet"   # Level 2.0, one row per retrieval (millions of rows)
+DATA_ALM_L15         = "/data/AERONET_INV_Almucantar_L15_AllPoints_V3.parquet"  # Level 1.5, one row per retrieval (millions of rows)
+DATA_ALM_L15_DAILY   = "/data/AERONET_INV_Almucantar_L15_Daily_V3.parquet"      # Level 1.5 daily means
+DATA_ALM_L15_MONTHLY = "/data/AERONET_INV_Almucantar_L15_Monthly_V3.parquet"    # Level 1.5 monthly means
 """
 
 cfg = Config()
@@ -243,11 +257,11 @@ def state():
 
 
 def env():
-    import numpy, pandas, matplotlib, seaborn, scipy, statsmodels, pyarrow, IPython, cartopy, shapely
+    import numpy, pandas, matplotlib, seaborn, scipy, statsmodels, pyarrow, duckdb, IPython, cartopy, shapely
     mem = Path("/sys/fs/cgroup/memory.max").read_text().strip()
     quota, period = Path("/sys/fs/cgroup/cpu.max").read_text().split()       # e.g. "200000 100000" = 2 CPUs
     return {"python": sys.version.split()[0],
-            "packages": {"numpy": numpy.__version__, "pandas": pandas.__version__, "pyarrow": pyarrow.__version__,
+            "packages": {"numpy": numpy.__version__, "pandas": pandas.__version__, "pyarrow": pyarrow.__version__, "duckdb": duckdb.__version__,
                          "matplotlib": matplotlib.__version__, "seaborn": seaborn.__version__, "scipy": scipy.__version__,
                          "statsmodels": statsmodels.__version__, "cartopy": cartopy.__version__, "shapely": shapely.__version__,
                          "ipython": IPython.__version__},

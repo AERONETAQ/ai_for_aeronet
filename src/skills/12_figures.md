@@ -20,7 +20,8 @@ checked figure: it belongs to the answer only after the figure check of step 5 s
      label with unit;
    - every annotation and abbreviation defined in the figure ("n = years per month", DJF = Dec–Feb);
    - the data in one small line naming the table and level: "AERONET solar AOD Level 2.0 daily means, Version 3",
-     "Level 1.5 daily means (provisional)", "hybrid inversions Level 2.0 daily means", "lunar AOD Level 2.0, all points";
+     "Level 1.5 daily means (provisional)", "AERONET monthly means, Level 2.0", "hybrid inversions Level 2.0 daily
+     means", "almucantar inversions Level 2.0, daily means of the retrievals", "lunar AOD Level 2.0, all points";
    - no raw column or variable names (AOD_500nm, clim, sd) and no default labels anywhere.
    Honest drawing: when the number of years or days behind the points varies, write n on each point or as a
    second row of tick labels; a point from n = 1 gets no error bar and a distinct marker, named in the legend;
