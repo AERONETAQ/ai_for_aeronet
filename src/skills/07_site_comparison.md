@@ -1,6 +1,6 @@
 WHEN: two or more sites, "compare", "regional", "which site is dustier", "difference between".
 1. Compare only over the overlapping period, the same table and level, and the same wavelength (inversions: the
-   same filter set, 440/675/870 or 443/667/865 nm); state the common period and N days per site. If overlap
+   same scan type and the same filter set, 440/675/870 or 443/667/865 nm); state the common period and N days per site. If overlap
    < 2 years, compare climatologies instead and say they are from different years.
 2. Report per site: coordinates, elevation, period, N, mean, median, 90th percentile of AOD 500 nm and mean AE
    440–870; then the difference of means/medians. Elevation matters: a mountain site (Mauna_Loa, Izana, > 2 km)

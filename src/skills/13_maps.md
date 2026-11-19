@@ -24,8 +24,8 @@ checked numbers, self-explanatory, figure check); this adds what is special abou
    admin (the country's name) and iso_3166_2 (e.g. IN-PB). A country's border includes its overseas parts
    (France includes French Guiana): say so, or keep only the sites inside the bounding box of the mainland.
    Island and coastal sites can fall just outside a polygon: say how many sites a border test dropped and name
-   them when few. One site table (name, lon, lat) is built once with drop_duplicates on the site name, not
-   from the full daily table.
+   them when few. One site table (name, lon, lat, and the value to draw) is built once, as one GROUP BY on the
+   site name inside DuckDB (large_tables skill step 4), never by loading the rows of every site.
 4. Drawing the points: ax.scatter(lon, lat, c=value, transform=ccrs.PlateCarree(), edgecolor="k", linewidth=0.3),
    sorted so the high values are drawn last; a location-only map uses one colour. Site names with ax.text when
    up to about 30 sites are drawn; above that, label only the highest and lowest. The marker size says nothing

@@ -14,13 +14,13 @@ WHEN: "what kind of aerosol", "dust or smoke", "fine vs coarse", "Ångström exp
 4. Always report the table of the fraction of days in each class; when a figure is warranted, the AOD–AE scatter
    (x = AE 440–870, y = AOD 500 nm, log y), colored by month or season. This is a classification of daily means,
    not of single plumes.
-5. When the site has inversions (DATA_INV, inversions skill), confirm the type with them on the same days: dust =
+5. When the site has inversions (DATA_ALM or DATA_INV, inversions skill), confirm the type with them on the same days: dust =
    high depolarization ratio, coarse-dominated volume, SSA rising with wavelength; smoke or pollution = low
    depolarization, fine-dominated, SSA falling with wavelength, SSA(440) below about 0.9 for fresh smoke. Say when the AOD–AE class
    and the inversion disagree. At night (DATA_LUNAR) only the AOD–AE route exists.
 6. A fine/coarse split of the AOD itself (the spectral deconvolution product, O'Neill et al. 2003) is not in
-   this corpus: the fine and coarse extinction come from the inversion table (AOD_Extinction_Fine/Coarse), on
-   inversion days only. Do not implement the deconvolution from four wavelengths; say the product is absent.
+   this corpus: the fine and coarse extinction come from the inversion tables (AOD_Extinction_Fine/Coarse), on
+   retrieval days only. Do not implement the deconvolution from four wavelengths; say the product is absent.
 7. AOD at a wavelength that is not measured (e.g. 550 nm): Ångström power law
    AOD(l) = AOD(500) * (l/500) ** (-AE) with AE = Angstrom_Exponent_440_870nm; valid only for 440–870 nm.
    Say that the value is interpolated.

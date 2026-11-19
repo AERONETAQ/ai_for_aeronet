@@ -11,6 +11,7 @@ RUN apt-get update \
       numpy==2.2.2 \
       pandas==2.2.3 \
       pyarrow==24.0.0 \
+      duckdb==1.5.4 \
       matplotlib==3.11.2 \
       seaborn==0.13.2 \
       scipy==1.18.1 \

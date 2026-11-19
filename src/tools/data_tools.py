@@ -1,6 +1,6 @@
 """Section 4 · Two deterministic tools: computed on the host from the parquet tables, no LLM, no sandbox.
 
-Both take a `dataset`: one of the names in config data_files (aod_l2, aod_l15, inv, lunar), default aod_l2.
+Both take a `dataset`: one of the names in config data_files (the 13 tables), default aod_l2.
 list_sites never returns more than MAX_SITE_ROWS rows. describe_columns(site) reads a cached per-site count table
 (_site_counts(), computed once per dataset in 1–20 s) instead of the whole parquet per call, and is registered
 sequential=True so calls never overlap (14 parallel full-parquet reads once took the host to ~12 GB).
@@ -16,7 +16,8 @@ import pyarrow.parquet as pq
 from .. import config
 
 DATASETS = config.DATA_FILES              # dataset name -> parquet path (config.yaml data_files)
-Dataset = Literal["aod_l2", "aod_l15", "inv", "lunar"]   # the names the model may pass (an enum in the tool schema)
+Dataset = Literal["aod_l2", "aod_l15", "aod_l2_monthly", "aod_l15_monthly", "lunar", "lunar_l15", "inv", "inv_monthly",
+                  "inv_l15_monthly", "alm", "alm_l15", "alm_l15_daily", "alm_l15_monthly"]   # the names the model may pass (an enum in the tool schema)
 assert set(DATASETS) == set(Dataset.__args__), f"config data_files {list(DATASETS)} must be exactly {Dataset.__args__}"
 
 
@@ -26,20 +27,36 @@ def _path(dataset):
     return DATASETS[dataset]
 
 
+def _unit(dataset):
+    """What one row of the table is."""
+    if dataset.endswith("monthly"):
+        return "site-months"
+    if dataset in ("lunar", "lunar_l15"):
+        return "measurements"
+    if dataset in ("alm", "alm_l15"):
+        return "retrievals"
+    return "site-days"
+
+
 _SITES = {}
 
 def _sites(dataset):
-    '''One row per site: location, record span, days with data. Read once per dataset (1–20 s), then cached.'''
+    '''One row per site: location, record span, days with data (months in a monthly table). Read once per dataset
+    (1–20 s), then cached. The site name is read as a category, so even 10 million rows take a few hundred MB.'''
     if dataset not in _SITES:
         cols = ["AERONET_Site_Name", "Site_Latitude_Degrees", "Site_Longitude_Degrees", "Site_Elevation_m", "date"]
-        df = pd.read_parquet(_path(dataset), columns=cols)
-        g = df.groupby("AERONET_Site_Name")
+        num_days = [c for c in pq.ParquetFile(_path(dataset)).schema_arrow.names if c.startswith("NUM_DAYS_")]
+        df = pd.read_parquet(_path(dataset), columns=cols + num_days, read_dictionary=["AERONET_Site_Name"])
+        if num_days:              # a monthly table has a row for every month of the site's span: keep the months with data
+            df = df[df[num_days].max(axis=1) > 0]
+        g = df.groupby("AERONET_Site_Name", observed=True)
         _SITES[dataset] = pd.DataFrame({"lat": g["Site_Latitude_Degrees"].first().round(3),
                                         "lon": g["Site_Longitude_Degrees"].first().round(3),
                                         "elev_m": g["Site_Elevation_m"].first().round(0).astype(int),
                                         "first": g["date"].min().dt.strftime("%Y-%m-%d"),
                                         "last": g["date"].max().dt.strftime("%Y-%m-%d"),
                                         "days": g["date"].nunique()}).sort_values("days", ascending=False)
+        _SITES[dataset].index = _SITES[dataset].index.astype(str)
     return _SITES[dataset]
 
 
@@ -48,21 +65,25 @@ MAX_SITE_ROWS = config.MAX_SITE_ROWS     # list_sites never returns more rows th
 
 def list_sites(name_contains: str = "", min_days: int = 0, limit: int = 40, dataset: Dataset = "aod_l2") -> str:
     '''Find AERONET sites in one table. Returns name, latitude, longitude, elevation (m), first and last day with
-    data, and the number of days with data (UTC dates with at least one measurement in the lunar table), sorted by
-    record length. dataset: aod_l2 (solar AOD Level 2.0 daily, the default), aod_l15 (solar AOD Level 1.5 daily),
-    inv (inversions, hybrid scans, Level 2.0 daily), lunar (lunar AOD Level 2.0, all points). name_contains is
-    case-insensitive (e.g. "kanpur", "GSFC", "_Island"). Use this before any site analysis to get the exact site
-    name. At most 50 rows are returned: to select many sites (a region, a threshold), do it in run_python instead.
+    data, and the number of days with data, sorted by record length. dataset names one of the 13 tables of the data
+    dictionary (default aod_l2, solar AOD Level 2.0 daily means). name_contains is case-insensitive (e.g. "kanpur",
+    "GSFC", "_Island"). Use this before any site analysis to get the exact site name. At most 50 rows are
+    returned: to select many sites (a region, a threshold), do it in run_python instead.
     Limits: one table per call; name_contains is a plain substring (no regex, no fuzzy spelling: "Mauna" finds
     Mauna_Loa, "Mauna Loa" does not); coordinates and elevation are the site's first row, rounded to 3 decimals;
-    "days" counts dates with any value, not the days of one wavelength (describe_columns) and not nights.
+    "days" counts UTC dates with any value (in a monthly table: months with data; in an all-points table: dates
+    with at least one measurement or retrieval), not the days of one wavelength or product (describe_columns)
+    and not nights.
 
     Args:
         name_contains: case-insensitive substring of the site name ("kanpur", "GSFC", "_Island"); empty = every site.
-        min_days: keep only sites with at least this many days with data in that table (0 = all).
+        min_days: keep only sites with at least this many days (months in a monthly table) with data in that table (0 = all).
         limit: how many rows to return, the longest records first; never more than 50.
-        dataset: the table: aod_l2 (solar AOD Level 2.0 daily means, the default), aod_l15 (solar AOD Level 1.5
-            daily means), inv (hybrid inversions Level 2.0 daily means), lunar (lunar AOD Level 2.0, all points).
+        dataset: the table. Solar AOD: aod_l2 (Level 2.0 daily means, the default), aod_l15 (Level 1.5 daily),
+            aod_l2_monthly, aod_l15_monthly. Lunar AOD, all points: lunar (Level 2.0), lunar_l15 (Level 1.5).
+            Hybrid-scan inversions: inv (Level 2.0 daily), inv_monthly (Level 2.0), inv_l15_monthly (Level 1.5).
+            Almucantar-scan inversions: alm (Level 2.0, all points), alm_l15 (Level 1.5, all points),
+            alm_l15_daily, alm_l15_monthly.
     '''
     limit = min(limit, MAX_SITE_ROWS)
     s = _sites(dataset)
@@ -97,13 +118,11 @@ def _site_counts(dataset):
 
 
 COLUMN_MEANINGS = {
-    "AERONET_Site_Name": "site name", "datetime_utc": "time stamp, UTC (12:00 for daily means)", "date": "day",
+    "AERONET_Site_Name": "site name", "datetime_utc": "time stamp, UTC (12:00 for daily means; not in monthly tables)", "date": "day (monthly tables: first day of the month)",
     "year": "year", "month": "month", "Day_of_Year": "day of year 1–366", "Day_of_Year_Fraction": "day of year with the time as a fraction",
-    "Day_of_Year_fraction": "day of year with the time as a fraction",
     "Site_Latitude_Degrees": "latitude (deg)", "Site_Longitude_Degrees": "longitude (deg)", "Site_Elevation_m": "elevation (m)",
     "Precipitable_Water_cm": "column water vapour (cm)", "Triplet_Variability_Precipitable_Water_cm": "triplet variability of the water vapour (cm)",
     "Data_Quality_Level": "lev20 or lev15", "AERONET_Instrument_Number": "sun-photometer id",
-    "PI": "site principal investigator", "PI_Email": "PI e-mail",
     # inversion table
     "Angstrom_Exponent_440_870nm_from_Coincident_Input_AOD": "Ångström exponent 440–870 nm of the measured input AOD",
     "Extinction_Angstrom_Exponent_440_870nm_Total": "Ångström exponent 440–870 nm of the retrieved extinction",
@@ -116,7 +135,17 @@ COLUMN_MEANINGS = {
     "Forcing_Eff_BOA": "forcing efficiency at the surface (W/m² per unit AOD 550 nm)",
     "Forcing_Eff_TOA": "forcing efficiency at the top of the atmosphere (W/m² per unit AOD 550 nm)",
     "Diffuse_BOA": "diffuse broadband flux at the surface (W/m²)", "Diffuse_TOA": "diffuse broadband flux at the top of the atmosphere (W/m²)",
-    "Retrieval_Measurement_Scan_Type": "always Hybrid",
+    "Retrieval_Measurement_Scan_Type": "Hybrid or Almucantar: one value per table",
+    "Sphericity_Factor_percent": "retrieved share of spherical particles (%)",
+    "Inflection_Radius_of_Size_Distribution_um": "radius that separates the fine from the coarse mode (µm)",
+    "Average_Solar_Zenith_Angles_for_Flux_Calculation_Degrees": "solar zenith angle used for the fluxes (deg)",
+    "Solar_Zenith_Angle_for_Measurement_Start_Degrees": "solar zenith angle when the sky scan started (deg)",
+    "Sky_Residual_percent": "misfit between measured and modelled sky radiances (%)",
+    "Sun_Residual_percent": "misfit between measured and modelled AOD (%)",
+    "Coincident_AOD440nm": "measured AOD at 440 nm at the time of the scan",
+    "If_Retrieval_is_L2_without_L2_0_4_AOD_440_threshold": "1 = the retrieval passes every Level 2.0 check except AOD(440) >= 0.4",
+    "If_AOD_is_L2": "1 = the AOD that went into the retrieval is Level 2.0",
+    "Last_Processing_Date_dd_mm_yyyy": "processing date (text)", "Last_Processing_Time_hh_mm_ss": "processing time (text)",
     # lunar table
     "Measurement_Type_solar_or_lunar": "always lunar", "Solar_Zenith_Angle_Degrees": "solar zenith angle (deg)",
     "Lunar_Zenith_Angle_Degrees": "zenith angle of the Moon (deg)", "Optical_Air_Mass": "optical air mass of the lunar path",
@@ -125,6 +154,7 @@ COLUMN_MEANINGS = {
     "Last_Date_Processed": "processing date", "Number_of_Wavelengths": "number of AOD wavelengths of the instrument",
     "Exact_Wavelengths_of_PW_um_935nm": "actual water-vapour filter wavelength (µm)",
 }
+COUNTS = ("N_", "NUM_DAYS_", "NUM_POINTS_")       # count columns: not listed one by one by describe_columns
 MODE = {"T": "total", "F": "fine mode", "C": "coarse mode", "Total": "total", "Fine": "fine mode", "Coarse": "coarse mode"}
 SIZE = {"VolC": "volume concentration (µm³/µm²)", "REff": "effective radius (µm)", "VMR": "volume median radius (µm)", "Std": "width of the size distribution (std of ln r)"}
 
@@ -144,7 +174,11 @@ PATTERNS = [   # (regex, lambda match -> meaning)
     (r"Spectral_Flux_(Down|Up|Diffuse)_(\d+)nm",         lambda m: f"spectral {m[1].lower()}ward flux at {m[2]} nm (W/m²/µm)"),
     (r"Lidar_Ratio_(\d+)nm",                            lambda m: f"lidar ratio at {m[1]} nm (sr)"),
     (r"Depolarization_Ratio_(\d+)nm",                   lambda m: f"linear depolarization ratio at {m[1]} nm"),
+    (r"Scattering_Angle_Bin_(.+)_(\d+)nm",                lambda m: f"sky radiances measured in the scattering-angle bin {m[1].replace('_', ' ')} at {m[2]} nm (count)"),
+    (r"Surface_Albedo_(\d+)m",                          lambda m: f"surface albedo assumed at {m[1]} nm"),
     (r"N_(.+)",                                         lambda m: f"number of measurements in the daily {m[1]}"),
+    (r"NUM_DAYS_(.+)",                                  lambda m: f"number of days in the monthly {m[1]}"),
+    (r"NUM_POINTS_(.+)",                                lambda m: f"number of measurements in the monthly {m[1]}"),
 ]
 
 
@@ -160,25 +194,29 @@ def _describe(col):
 
 
 def describe_columns(site: str = "", dataset: Dataset = "aod_l2") -> str:
-    '''Columns of one AERONET table with meaning, dtype and how many rows have a value. dataset: aod_l2 (solar AOD
-    Level 2.0 daily, the default), aod_l15 (solar AOD Level 1.5 daily), inv (inversions, hybrid scans, Level 2.0
-    daily), lunar (lunar AOD Level 2.0, all points). Without a site: every column (all sites). With a site (exact
+    '''Columns of one AERONET table with meaning, dtype and how many rows have a value. dataset names one of the 13
+    tables of the data dictionary (default aod_l2). Without a site: every column (all sites). With a site (exact
     name from list_sites): only the columns that site has data for — one call, for the site the analysis is about,
     before choosing a wavelength or product. For a question over many sites do not call this per site: count valid
-    values in run_python. The N_<column> measurement-count columns are not listed one by one; every value column
-    of a daily table has one.
+    values in run_python. The count columns (N_<column> in daily tables, NUM_DAYS_<column> and NUM_POINTS_<column>
+    in monthly tables) are not listed one by one; every value column of those tables has them.
     Limits: counts of rows with a value over the whole record, not per period (a site that stopped in 2010 still
-    shows full coverage) and no min, max or mean (compute them in run_python); at a 440 nm-set site the 443 nm
-    columns of the inversion table are simply absent from the list; the first call per table takes 1–20 s.
+    shows full coverage) and no min, max or mean (compute them in run_python); a monthly table has a row for every
+    month of the site's span, with or without data, so its cover is the share of months with a value; an inversion
+    table lists only the filter set the site has (440/675/870 or 443/667/865 nm); the first call per table takes
+    1–20 s.
 
     Args:
         site: exact site name from list_sites (case-sensitive, with underscores: "Mauna_Loa") for that site's
             columns only; empty = every column, counted over all sites.
-        dataset: the table: aod_l2 (solar AOD Level 2.0 daily means, the default), aod_l15 (solar AOD Level 1.5
-            daily means), inv (hybrid inversions Level 2.0 daily means), lunar (lunar AOD Level 2.0, all points).
+        dataset: the table. Solar AOD: aod_l2 (Level 2.0 daily means, the default), aod_l15 (Level 1.5 daily),
+            aod_l2_monthly, aod_l15_monthly. Lunar AOD, all points: lunar (Level 2.0), lunar_l15 (Level 1.5).
+            Hybrid-scan inversions: inv (Level 2.0 daily), inv_monthly (Level 2.0), inv_l15_monthly (Level 1.5).
+            Almucantar-scan inversions: alm (Level 2.0, all points), alm_l15 (Level 1.5, all points),
+            alm_l15_daily, alm_l15_monthly.
     '''
     pf = pq.ParquetFile(_path(dataset))
-    unit = "site-days" if dataset != "lunar" else "measurements"
+    unit = _unit(dataset)
     nulls = {}                                            # column -> number of rows without a value
     if site:
         # one site: its row from the cached per-site counts (nothing is read from the file here)
@@ -203,13 +241,16 @@ def describe_columns(site: str = "", dataset: Dataset = "aod_l2") -> str:
         header = f"{dataset}, all sites: {n_rows} rows ({unit})"
     lines = [header, f"{'column':48} {'dtype':13} {'rows_with_value':>15} {'cover':>6}  meaning"]
     for c in pf.schema_arrow.names:
-        if c.startswith("N_"):
+        if c.startswith(COUNTS):
             continue
         have = n_rows - nulls[c]
         if site and have == 0:
             continue
         lines.append(f"{c:48} {str(pf.schema_arrow.field(c).type):13} {have:>15} {100 * have / n_rows:>5.1f}%  {_describe(c)}")
     if any(c.startswith("N_") for c in pf.schema_arrow.names):
-        lines.append("N_<column> (Int32): number of measurements (retrievals in the inversion table) averaged into that day's value; "
+        lines.append("N_<column> (Int32): number of measurements (retrievals in an inversion table) averaged into that day's value; "
                      "one per value column (0 -> value is NaN)")
+    if any(c.startswith("NUM_DAYS_") for c in pf.schema_arrow.names):
+        lines.append("NUM_DAYS_<column>, NUM_POINTS_<column> (Int32): days and measurements (retrievals in an inversion table) "
+                     "averaged into that month's value; one pair per value column (0 -> value is NaN)")
     return "\n".join(lines)

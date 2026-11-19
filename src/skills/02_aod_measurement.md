@@ -8,7 +8,7 @@ with surface air quality, satellites or models, or asks about extreme values, de
    extinction, unitless, of everything between the instrument and the top of the atmosphere.
 2. Sampling: a triplet of 3 measurements over 1 minute, every 15 minutes by day (more often at high air mass
    for the Langley schedule), about every 3 minutes by night. A daily mean is the arithmetic mean of every
-   triplet of that UTC day that passed the level's screening (N_<column>); it is not weighted by time of day,
+   triplet of that day that passed the level's screening (N_<column>); it is not weighted by time of day,
    so a day with morning data only is a morning mean: N tells the weight of a day.
 3. Clear-sky bias: AOD exists only when the direct beam is cloud-free, so every AERONET statistic describes
    cloud-free daytime (or moonlit night-time) conditions: humid, cloudy seasons are under-sampled, days per

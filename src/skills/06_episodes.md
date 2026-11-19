@@ -11,6 +11,8 @@ WHEN: "event", "episode", "extreme days", "dust storm", "smoke", "when was AOD h
    splitting the episode, unless the gap is > 2 days.
 6. Do not name the source (a specific fire, storm) — the data cannot show it; describe timing, magnitude and type.
 7. The other tables add to an episode: the lunar nights inside it (did the plume persist after sunset: lunar
-   skill), the inversion days inside it (how absorbing, how fine: inversions skill), and the Level 1.5 days when
-   the episode is too recent for Level 2.0 (data_levels skill). The daily maximum of an extreme day is biased
+   skill), the inversion retrievals inside it with their times (how absorbing, how fine, and when: inversions
+   skill, time_of_day skill step 6), and the Level 1.5 days when the episode is too recent for Level 2.0
+   (data_levels skill). A search over many sites computes the thresholds and the flagged days per site in one
+   aggregation and loads daily rows only for the sites and periods that came out. The daily maximum of an extreme day is biased
    low by the faint-signal limit (aod_measurement skill step 4): say so for peaks above about 2.

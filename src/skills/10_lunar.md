@@ -1,5 +1,7 @@
 WHEN: "night", "night-time", "lunar", "moon", "day–night difference", "diurnal cycle" beyond daylight, "polar
-night", "after sunset", "24-hour coverage". Table: DATA_LUNAR (all points: one row per measurement).
+night", "after sunset", "24-hour coverage". Tables: DATA_LUNAR (Level 2.0, the reference) and DATA_LUNAR_L15
+(Level 1.5: more sites and the recent months, provisional, data_levels skill step 7); all points, one row per
+measurement, the same columns. One level per statistic.
 1. What it is: the Model-T Cimel measures the direct lunar irradiance at 440, 500, 675, 870, 1020 and 1640 nm
    (no UV: the Moon is too faint). AOD follows from the ROLO lunar-irradiance model with AERONET's empirical
    phase-angle correction, derived from solar/lunar Langley pairs at Mauna Loa and Izaña (the correction is often
@@ -18,7 +20,11 @@ night", "after sunset", "24-hour coverage". Table: DATA_LUNAR (all points: one r
 3. From points to nights: a night spans two UTC dates. Assign each measurement to the local night it belongs to:
    night = (datetime_utc + longitude / 15 hours − 12 hours).date, the local calendar date on which that night
    began. Then nightly mean, median, N and the phase-angle range per night; a night with N < 5 is a weak
-   estimate. Drop AERONET's verbatim duplicate rows first (drop_duplicates on site + datetime_utc).
+   estimate. Drop AERONET's verbatim duplicate rows first (drop_duplicates on site + datetime_utc). For one site
+   this is pandas on that site's rows; for many sites the nights are built inside DuckDB in one query
+   (GROUP BY site and night, with night = CAST(datetime_utc + to_seconds(CAST(round(Site_Longitude_Degrees * 240)
+   - 43200 AS BIGINT)) AS DATE) and count(DISTINCT datetime_utc) as N), and only the table of nights comes back
+   (large_tables skill).
 4. Day against night with this corpus: the solar tables hold daily means only, so pair each night with the solar
    daily mean (DATA, Level 2.0) of the day it began (and of the following day when the question is about the
    morning side), on days that have both; report N pairs, the mean and median night-minus-day difference, its
@@ -41,10 +47,9 @@ night", "after sunset", "24-hour coverage". Table: DATA_LUNAR (all points: one r
    waning), Optical_Air_Mass (report its range; noise and the faint-signal loss grow with it, so a comparison
    can be restricted to air mass <= 3 with the restriction stated), Lunar_Zenith_Angle_Degrees,
    Triplet_Variability_<λ> as a noise indicator (a convention of this skill, not AERONET's: report, or screen,
-   nights whose median triplet variability exceeds 0.02). Read columns and sites selectively: the table has
-   8 million rows.
+   nights whose median triplet variability exceeds 0.02).
 7. Figures, when warranted: the nightly means as a time series with the solar daily means of the same site
    overlaid in a distinct marker and colour, the same y-axis; a histogram or box plot of night-minus-day
    differences; the phase angle as marker colour when the question is about the lunar cycle; a map of sites
    coloured by the mean night-minus-day difference uses a diverging colour map centred on zero (maps skill).
-   Titles and legends name "lunar Level 2.0, all points" and "solar Level 2.0, daily means".
+   Titles and legends name the tables as used: "lunar Level 2.0, all points", "solar Level 2.0, daily means".

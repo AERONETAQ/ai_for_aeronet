@@ -1,7 +1,10 @@
 WHEN: "latest", "recent", "this year", "near-real-time", "provisional", "Level 1.5", a period after the Level 2.0
-record of the site ends, a site that is not in Level 2.0, or any comparison of the two levels.
+record of the site ends, a site that is not in Level 2.0, or any comparison of the two levels. Level pairs in
+this corpus: solar AOD (DATA / DATA_L15, DATA_MONTHLY / DATA_L15_MONTHLY), lunar AOD (DATA_LUNAR /
+DATA_LUNAR_L15), hybrid inversions monthly (DATA_INV_MONTHLY / DATA_INV_L15_MONTHLY), almucantar inversions
+all points (DATA_ALM / DATA_ALM_L15).
 1. Level 2.0 (DATA) is the reference: cloud-screened, quality-assured, pre- AND post-field calibration applied
-   (Giles et al. 2019). AOD uncertainty about 0.01 at 400 nm and longer, 0.02 in the UV (340, 380 nm). Use it
+   (Giles et al. 2019; its accuracy: aod_measurement skill step 5). Use it
    for climatologies, trends, episodes and anything to be published. Its record ends when the instrument's last
    post-field calibration was applied: a few months to two years before today, on a different date at every
    site (GSFC January 2026, Kanpur November 2025 at the time of writing). Report that end date whenever
@@ -23,7 +26,18 @@ record of the site ends, a site that is not in Level 2.0, or any comparison of t
    filter or a changed instrument (compare AERONET_Instrument_Number). A Level 1.5 day missing from Level 2.0
    inside the Level 2.0 period was removed by the Level 2.0 checks or came from a non-primary instrument; it is
    not a gap in the Level 1.5 record.
-5. A site only in Level 1.5 (1,613 sites against 1,485) has no finally calibrated data at all: say so, and treat
-   every number from it as provisional.
-6. Both tables are daily means of the same kind (12:00 UTC stamps, N_ counts): the same climatology, episode and
-   comparison skills apply, with the level named in every table, figure title and the answer.
+5. A site only in Level 1.5 (about 1,610 sites against 1,490 for solar AOD) has no finally calibrated data at
+   all: say so, and treat every number from it as provisional.
+6. Both tables are daily means of the same kind (12:00 stamps, N_ counts): the same climatology, episode and
+   comparison skills apply, with the level named in every table, figure title and the answer. The monthly
+   tables of the two levels are kept apart the same way.
+7. Lunar AOD: DATA_LUNAR_L15 stands to DATA_LUNAR as DATA_L15 to DATA: the same screening, the pre-field
+   calibration only, more sites and the recent months. Night statistics, day–night differences and anything
+   near the ±0.01–0.02 lunar uncertainty use Level 2.0; Level 1.5 serves "last month's nights" and sites
+   without Level 2.0, labelled provisional.
+8. Inversions: Level 1.5 means more than provisional calibration. A Level 1.5 inversion table holds every
+   retrieval that ran, without the Level 2.0 checks on solar zenith angle, sky-radiance fit, number of
+   scattering angles and, for absorption, AOD(440) >= 0.4. It is screened before use as the inversions skill
+   step 3 says; its daily and monthly means are averages of unscreened retrievals and never carry an SSA or
+   refractive-index statistic. Level 2.0 inversions also need Level 2.0 AOD, so they end where the site's
+   Level 2.0 AOD ends.
