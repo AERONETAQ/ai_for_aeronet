@@ -1,8 +1,9 @@
 WHEN: "latest", "recent", "this year", "near-real-time", "provisional", "Level 1.5", a period after the Level 2.0
-record of the site ends, a site that is not in Level 2.0, or any comparison of the two levels. Level pairs in
-this corpus: solar AOD (DATA / DATA_L15, DATA_MONTHLY / DATA_L15_MONTHLY), lunar AOD (DATA_LUNAR /
-DATA_LUNAR_L15), hybrid inversions monthly (DATA_INV_MONTHLY / DATA_INV_L15_MONTHLY), almucantar inversions
-all points (DATA_ALM / DATA_ALM_L15).
+record of the site ends, a site that is not in Level 2.0, or any comparison of the two levels. Every table
+has its pair: solar AOD (DATA / DATA_L15, DATA_MONTHLY / DATA_L15_MONTHLY, DATA_POINTS / DATA_L15_POINTS),
+lunar AOD (DATA_LUNAR / DATA_LUNAR_L15), hybrid inversions (DATA_INV / DATA_INV_L15_DAILY, DATA_INV_MONTHLY /
+DATA_INV_L15_MONTHLY, DATA_INV_POINTS / DATA_INV_L15_POINTS), almucantar inversions (DATA_ALM_DAILY /
+DATA_ALM_L15_DAILY, DATA_ALM_MONTHLY / DATA_ALM_L15_MONTHLY, DATA_ALM / DATA_ALM_L15).
 1. Level 2.0 (DATA) is the reference: cloud-screened, quality-assured, pre- AND post-field calibration applied
    (Giles et al. 2019; its accuracy: aod_measurement skill step 5). Use it
    for climatologies, trends, episodes and anything to be published. Its record ends when the instrument's last
@@ -35,9 +36,7 @@ all points (DATA_ALM / DATA_ALM_L15).
    calibration only, more sites and the recent months. Night statistics, day–night differences and anything
    near the ±0.01–0.02 lunar uncertainty use Level 2.0; Level 1.5 serves "last month's nights" and sites
    without Level 2.0, labelled provisional.
-8. Inversions: Level 1.5 means more than provisional calibration. A Level 1.5 inversion table holds every
-   retrieval that ran, without the Level 2.0 checks on solar zenith angle, sky-radiance fit, number of
-   scattering angles and, for absorption, AOD(440) >= 0.4. It is screened before use as the inversions skill
-   step 3 says; its daily and monthly means are averages of unscreened retrievals and never carry an SSA or
-   refractive-index statistic. Level 2.0 inversions also need Level 2.0 AOD, so they end where the site's
-   Level 2.0 AOD ends.
+8. Inversions: Level 1.5 means more than provisional calibration: every retrieval that ran, without the
+   Level 2.0 checks. The inversions skill step 3 says how it is screened and what its daily and monthly means
+   may be used for. Level 2.0 inversions also need Level 2.0 AOD, so they end where the site's Level 2.0 AOD
+   ends.

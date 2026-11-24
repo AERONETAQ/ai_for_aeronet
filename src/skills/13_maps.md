@@ -48,7 +48,7 @@ checked numbers, self-explanatory, figure check); this adds what is special abou
    title's position becomes NaN): the title then vanishes from the PNG, and fig.savefig(..., bbox_inches="tight")
    saves only the colour bar, with the map itself missing. Verified fix in this sandbox: give the title an explicit
    position, ax.set_title("...", y=1.01) (or fig.suptitle), and the title, the labels and a tight save all work.
-   fig.canvas.draw() before saving does not fix it. Keep figsize at most 10x6 in, dpi 110, as for every figure.
+   fig.canvas.draw() before saving does not fix it.
 8. Figure check for a map, on top of the figures skill: where the highest and the lowest sites are, against the
    table; the number of markers against N; a map that is blank, one single colour, without coastlines, with the
    data outside the frame, or with the markers hidden under the land fill is a FAIL.

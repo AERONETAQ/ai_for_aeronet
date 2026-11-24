@@ -100,7 +100,7 @@ def haversine_km(lat1, lon1, lat2, lon2):
 def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, dataset: Dataset = "aod_l2") -> str:
     '''AERONET sites within max_km of a point (e.g. the coordinates geocode returned), nearest first: name,
     distance in km, latitude, longitude, elevation (m), first and last day with data and the number of days with
-    data in that table. dataset names one of the 13 tables of the data dictionary (default aod_l2). At most 50
+    data in that table. dataset names one of the 20 tables of the data dictionary (default aod_l2). At most 50
     rows; a wider circle or a region is a run_python selection instead.
     Limits: straight-line great-circle distance on a sphere (within 0.5 %), from the site's first-row
     coordinates; distance says nothing about representativeness: a mountain site or a coastal site 30 km away
@@ -113,10 +113,12 @@ def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, 
         max_km: radius of the circle around the point in kilometres (default 300).
         limit: how many rows to return, nearest first; never more than 50.
         dataset: the table whose sites are searched. Solar AOD: aod_l2 (Level 2.0 daily means, the default),
-            aod_l15 (Level 1.5 daily), aod_l2_monthly, aod_l15_monthly. Lunar AOD, all points: lunar (Level 2.0),
-            lunar_l15 (Level 1.5). Hybrid-scan inversions: inv (Level 2.0 daily), inv_monthly, inv_l15_monthly.
-            Almucantar-scan inversions: alm (Level 2.0, all points), alm_l15 (Level 1.5, all points),
-            alm_l15_daily, alm_l15_monthly.
+            aod_l15 (Level 1.5 daily), aod_l2_monthly, aod_l15_monthly, aod_l2_points, aod_l15_points (all points).
+            Lunar AOD, all points: lunar (Level 2.0), lunar_l15 (Level 1.5).
+            Hybrid-scan inversions: inv (Level 2.0 daily), inv_l15_daily, inv_monthly, inv_l15_monthly,
+            inv_points (Level 2.0, all points), inv_l15_points.
+            Almucantar-scan inversions: alm_daily (Level 2.0 daily), alm_l15_daily, alm_monthly, alm_l15_monthly,
+            alm (Level 2.0, all points), alm_l15 (Level 1.5, all points).
     '''
     limit = min(limit, MAX_SITE_ROWS)
     s = _sites(dataset).copy()
@@ -131,15 +133,16 @@ def nearest_sites(lat: float, lon: float, max_km: float = 300, limit: int = 10, 
 
 
 def site_coverage(site: str) -> str:
-    '''What the 13 tables hold for one site (exact name from list_sites): per table the first and last day with
-    data and the number of days with data, or "not in this table". One call answers which of solar AOD (Level 2.0
-    and 1.5, daily and monthly), lunar AOD (Level 2.0 and 1.5), hybrid inversions and almucantar inversions exist
-    for the site and over which period, before any cross-table analysis.
-    The first call reads the site list of every table once (a few seconds per table), later calls are instant.
+    '''What the 20 tables hold for one site (exact name from list_sites): per table the first and last day with
+    data and the number of days with data, or "not in this table". One call answers which of solar AOD, lunar AOD,
+    hybrid inversions and almucantar inversions exist for the site, at which level (2.0, 1.5) and time step
+    (monthly, daily, all points) and over which period, before any cross-table analysis.
+    The first call reads the site list of every table once (seconds per table, longest for the two solar AOD
+    all-points tables), later calls are instant.
     Limits: exact, case-sensitive site name (list_sites gives it); spans and day counts per table, not per
     wavelength or product (describe_columns) and not per year; in a monthly table "days" are months with data;
-    in the all-points tables (lunar, lunar_l15, alm, alm_l15) "days" are UTC dates with a measurement or
-    retrieval, not nights; a span says nothing about gaps inside it.
+    in the all-points tables (the names ending in _points, and lunar, lunar_l15, alm, alm_l15) "days" are UTC
+    dates with a measurement or retrieval, not nights; a span says nothing about gaps inside it.
 
     Args:
         site: exact site name from list_sites (case-sensitive, with underscores: "Mauna_Loa").

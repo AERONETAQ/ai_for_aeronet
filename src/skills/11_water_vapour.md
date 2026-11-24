@@ -1,5 +1,5 @@
 WHEN: "water vapour", "precipitable water", "humidity", "PW", "column water", "moist / dry season", or AOD
-against water vapour. Columns: Precipitable_Water_cm in the solar daily and monthly tables and the lunar tables
+against water vapour. Columns: Precipitable_Water_cm in the solar AOD tables (monthly, daily, points) and the lunar tables
 (with Triplet_Variability_Precipitable_Water_cm at night); not in the inversion tables.
 1. What it is: total column water vapour from the 935 nm absorption band, in cm of liquid water (1 cm = 1 g/cm²
    = 10 kg/m²), retrieved only when the direct Sun (or Moon) is cloud-free, so its sampling is the AOD's. Typical

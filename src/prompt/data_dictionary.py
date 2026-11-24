@@ -1,31 +1,41 @@
-"""Section 6 · Data dictionary of the 13 parquet tables under /data (notebooks/process_data/05).
+"""Section 6 · Data dictionary of the 20 parquet tables under /data (notebooks/process_data/05).
 
 Data-specific: swap this file, tools/data_tools.py and the data_access skill for another dataset.
 """
 
 DATA_DICTIONARY = """
-### data dictionary — 13 read-only parquet tables under /data (AERONET Version 3), paths pre-set in the kernel
-Four products, each at one or two quality levels and one to three time steps. Level 2.0 = quality-assured, final
-calibration; Level 1.5 = provisional (data_levels skill). "points" = one row per measurement or retrieval.
+### data dictionary — 20 read-only parquet tables under /data (AERONET Version 3), paths pre-set in the kernel
+Four products, each at two quality levels and at three time steps: monthly means, daily means and all points
+(lunar AOD: all points only). Level 2.0 = quality-assured, final calibration; Level 1.5 = provisional
+(data_levels skill). "points" = one row per measurement or retrieval.
 
 variable              dataset=         product                  level  one row is     rows  sites  columns  period
 DATA                  aod_l2           solar AOD                2.0    site-day     1.44 M  1,489       71  1993-05 → 2026-08
 DATA_L15              aod_l15          solar AOD                1.5    site-day     1.62 M  1,612       71  1993-05 → 2026-10
 DATA_MONTHLY          aod_l2_monthly   solar AOD                2.0    site-month   0.29 M  1,489       98  1993-05 → 2026-09
 DATA_L15_MONTHLY      aod_l15_monthly  solar AOD                1.5    site-month   0.31 M  1,611       98  1993-05 → 2026-09
+DATA_POINTS           aod_l2_points    solar AOD                2.0    measurement  58.6 M      *       97  *
+DATA_L15_POINTS       aod_l15_points   solar AOD                1.5    measurement  67.7 M      *       97  *
 DATA_LUNAR            lunar            lunar AOD                2.0    measurement  8.35 M    524       76  2014-12 → 2026-08
 DATA_LUNAR_L15        lunar_l15        lunar AOD                1.5    measurement  10.5 M    629      ~76  2014-12 → 2026-10
 DATA_INV              inv              inversions, hybrid scan  2.0    site-day     0.17 M    512      335  2014-06 → 2026-08
+DATA_INV_L15_DAILY    inv_l15_daily    inversions, hybrid scan  1.5    site-day     0.32 M      *      339  *
 DATA_INV_MONTHLY      inv_monthly      inversions, hybrid scan  2.0    site-month   0.04 M    624     ~490  2014 → 2026
 DATA_INV_L15_MONTHLY  inv_l15_monthly  inversions, hybrid scan  1.5    site-month   0.05 M    637     ~490  2014 → 2026
+DATA_INV_POINTS       inv_points       inversions, hybrid scan  2.0    retrieval    0.70 M      *      219  *
+DATA_INV_L15_POINTS   inv_l15_points   inversions, hybrid scan  1.5    retrieval    1.52 M      *      220  *
+DATA_ALM_DAILY        alm_daily        inversions, almucantar   2.0    site-day     0.65 M      *      335  *
+DATA_ALM_L15_DAILY    alm_l15_daily    inversions, almucantar   1.5    site-day     1.06 M  1,514     ~340  1993 → 2026-10
+DATA_ALM_MONTHLY      alm_monthly      inversions, almucantar   2.0    site-month   0.29 M      *      491  *
+DATA_ALM_L15_MONTHLY  alm_l15_monthly  inversions, almucantar   1.5    site-month   0.28 M  1,513      497  1993-05 → 2026-10
 DATA_ALM              alm              inversions, almucantar   2.0    retrieval    2.29 M  1,342     ~220  1993 → 2026
 DATA_ALM_L15          alm_l15          inversions, almucantar   1.5    retrieval    4.76 M  1,514     ~220  1993 → 2026-10
-DATA_ALM_L15_DAILY    alm_l15_daily    inversions, almucantar   1.5    site-day     1.06 M  1,514     ~340  1993 → 2026-10
-DATA_ALM_L15_MONTHLY  alm_l15_monthly  inversions, almucantar   1.5    site-month   0.28 M  1,513      497  1993-05 → 2026-10
 
-Not in the corpus: solar AOD as all points (no daytime diurnal cycle of AOD), almucantar Level 2.0 as daily or
-monthly means (compute them from DATA_ALM, time_of_day skill step 2), hybrid inversions as all points or as
-Level 1.5 daily means, the spectral deconvolution (fine/coarse AOD) product, the phase functions, PI contacts.
+* sites and period are not listed for these seven tables: list_sites(dataset=...) gives them. DATA_POINTS and
+DATA_L15_POINTS are by far the largest tables, about 10 GB each on disk (the next largest is 3 GB).
+
+Not in the corpus: lunar AOD as daily or monthly means (nights are built from the points, lunar skill), the
+spectral deconvolution (fine/coarse AOD) product, the phase functions, PI contacts.
 
 Common to every table: AERONET_Site_Name (text), Site_Latitude_Degrees, Site_Longitude_Degrees (decimal
 degrees), Site_Elevation_m, date, year, month, Data_Quality_Level ("lev20" or "lev15"). Column names are
@@ -46,7 +56,7 @@ join on AERONET_Site_Name + date.
 - All-points tables: datetime_utc = the time of the measurement or retrieval (UTC), date/year/month its UTC
   calendar date, Day_of_Year, Day_of_Year_Fraction, AERONET_Instrument_Number; no N_ columns (nothing is averaged).
 
-SOLAR AOD (DATA, DATA_L15, DATA_MONTHLY, DATA_L15_MONTHLY)
+SOLAR AOD (DATA, DATA_L15, DATA_MONTHLY, DATA_L15_MONTHLY, DATA_POINTS, DATA_L15_POINTS)
 - AOD_<λ>nm: 340, 380, 400, 412, 440, 443, 490, 500, 510, 532, 551, 555, 560, 620, 667, 675, 681, 709, 779,
   865, 870, 1020, 1640 (most sites: 340, 380, 440, 500, 675, 870, 1020).
 - Angstrom_Exponent_<λ1>_<λ2>nm: 340_440, 380_500, 440_675, 440_870, 500_870 (440_675nm_Polar: polar instruments).
@@ -54,6 +64,11 @@ SOLAR AOD (DATA, DATA_L15, DATA_MONTHLY, DATA_L15_MONTHLY)
 - DATA is the reference; its record ends at the instrument's last post-field calibration, months to two years
   before today, site by site. DATA_L15 has the same columns and reaches the last weeks (data_levels skill).
 - DATA_MONTHLY, DATA_L15_MONTHLY: AERONET's monthly means of the same quantities.
+- DATA_POINTS, DATA_L15_POINTS: every measurement behind those daily means, one row per measurement (a triplet,
+  minutes apart while the Sun is unobscured). The same AOD, Ångström and water-vapour columns, plus
+  per-measurement columns of the kind the lunar tables have (triplet variability, zenith angle, optical air
+  mass, exact wavelengths): describe_columns(dataset="aod_l2_points") lists them. When to open them:
+  large_tables skill step 1.
 
 LUNAR AOD (DATA_LUNAR Level 2.0, DATA_LUNAR_L15 Level 1.5; the same columns)
 - One row per measurement (a triplet, about every 3 min while the Moon is up and bright); one night spans two
@@ -73,8 +88,9 @@ LUNAR AOD (DATA_LUNAR Level 2.0, DATA_LUNAR_L15 Level 1.5; the same columns)
 - AERONET's files repeat about 39 k rows of DATA_LUNAR verbatim (0.5 %): count measurements with
   count(DISTINCT datetime_utc) per site, or drop_duplicates(["AERONET_Site_Name", "datetime_utc"]).
 
-INVERSIONS (DATA_INV, DATA_INV_MONTHLY, DATA_INV_L15_MONTHLY from hybrid scans; DATA_ALM, DATA_ALM_L15,
-DATA_ALM_L15_DAILY, DATA_ALM_L15_MONTHLY from almucantar scans; the same products in all seven)
+INVERSIONS (hybrid scans: DATA_INV, DATA_INV_L15_DAILY, DATA_INV_MONTHLY, DATA_INV_L15_MONTHLY, DATA_INV_POINTS,
+DATA_INV_L15_POINTS; almucantar scans: DATA_ALM_DAILY, DATA_ALM_L15_DAILY, DATA_ALM_MONTHLY, DATA_ALM_L15_MONTHLY,
+DATA_ALM, DATA_ALM_L15; the same products in all twelve)
 - Two scan types, never pooled (Retrieval_Measurement_Scan_Type = "Hybrid" or "Almucantar"; inversions skill
   step 1).
 - Filter sets: spectral products come at <λ> = 440, 675, 870, 1020 nm on most instruments, or 443, 667, 865
@@ -101,17 +117,17 @@ DATA_ALM_L15_DAILY, DATA_ALM_L15_MONTHLY from almucantar scans; the same product
 - Flux_Down/Up_BOA/TOA, Diffuse_BOA/TOA (broadband 0.2–4 µm, W/m²), Rad_Forcing_BOA/TOA (W/m², negative =
   cooling), Forcing_Eff_BOA/TOA (W/m² per unit AOD at 550 nm), Spectral_Flux_Down/Up/Diffuse_<λ>nm (W/m²/µm),
   Minimum/Maximum_Altitude_For_Flux_Calculations_km.
-- Sphericity_Factor_percent (retrieved share of spherical particles, %): filled mainly in the almucantar Level 1.5 tables; meaningful
-  only for coarse-mode aerosol at moderate AOD; where it is empty, particle shape shows through the
-  depolarization ratio.
-- Only in the all-points tables DATA_ALM and DATA_ALM_L15, per retrieval: Coincident_AOD440nm (the AOD at the
+- Sphericity_Factor_percent (retrieved share of spherical particles, %): filled mainly in the almucantar
+  Level 1.5 tables (inversions skill step 4).
+- Only in the all-points tables (DATA_ALM, DATA_ALM_L15; DATA_INV_POINTS and DATA_INV_L15_POINTS have the same
+  kind of columns, describe_columns confirms the names), per retrieval: Coincident_AOD440nm (the AOD at the
   scan), Solar_Zenith_Angle_for_Measurement_Start_Degrees, Sky_Residual_percent (misfit of the sky radiances;
   Level 2.0 keeps <= 8 %), Sun_Residual_percent, Scattering_Angle_Bin_<range>_<λ>nm (sky radiances measured
   per scattering-angle range), Surface_Albedo_<λ>m (assumed surface albedo; the name ends in m, not nm),
   Average_Solar_Zenith_Angles_for_Flux_Calculation_Degrees, Last_Processing_Date_dd_mm_yyyy and
-  Last_Processing_Time_hh_mm_ss (text), and two flags, always 1 in DATA_ALM and the way to screen DATA_ALM_L15:
+  Last_Processing_Time_hh_mm_ss (text), and two flags, always 1 in a Level 2.0 table and the way to screen a Level 1.5 one:
   If_Retrieval_is_L2_without_L2_0_4_AOD_440_threshold (1 = passes every Level 2.0 check except the AOD
   threshold) and If_AOD_is_L2 (1 = the input AOD is Level 2.0).
-list_sites, describe_columns and nearest_sites take dataset = one of the 13 names above (default "aod_l2");
-site_coverage(site) spans all 13. The sandbox environment block lists the tables actually mounted.
+list_sites, describe_columns and nearest_sites take dataset = one of the 20 names above (default "aod_l2");
+site_coverage(site) spans all 20. The sandbox environment block lists the tables actually mounted.
 """

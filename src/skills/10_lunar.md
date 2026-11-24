@@ -25,15 +25,17 @@ measurement, the same columns. One level per statistic.
    (GROUP BY site and night, with night = CAST(datetime_utc + to_seconds(CAST(round(Site_Longitude_Degrees * 240)
    - 43200 AS BIGINT)) AS DATE) and count(DISTINCT datetime_utc) as N), and only the table of nights comes back
    (large_tables skill).
-4. Day against night with this corpus: the solar tables hold daily means only, so pair each night with the solar
+4. Day against night: pair each night with the solar
    daily mean (DATA, Level 2.0) of the day it began (and of the following day when the question is about the
    morning side), on days that have both; report N pairs, the mean and median night-minus-day difference, its
    sign and spread, per wavelength, and when a significance is asked the Wilcoxon signed-rank test on the paired
    differences. The fairest pairs are stable days (the two bracketing daily means agree within 0.05); a mean
    difference within ±0.01 is inside the measurement uncertainty, not a diurnal cycle, however small its
    p-value. Within one night the evening and morning halves (before and after local midnight) can be compared
-   from the points themselves. The 3-hour transition-window test of Schafer et al. needs solar all-points data,
-   which this corpus does not have: say so when asked for it. Trends of night-time AOD are not warranted: the
+   from the points themselves. The 3-hour transition-window test of Schafer et al. (the last
+   solar measurements before sunset against the first lunar ones after it, and the reverse at dawn) takes its
+   solar side from DATA_POINTS: for the sites asked, both sides aggregated to the evening and the morning of
+   each date before they are joined (large_tables skill step 5). Trends of night-time AOD are not warranted: the
    record starts in 2015 and its sampling follows the lunar cycle; describe by year with N nights instead.
 5. Known biases to state: hazy nights are lost first at 440 nm (the faint Moon sets a maximum measurable AOD 2–3
    times lower than by day; on average 3 % of lunar 440 nm points are removed against 0.3 % at 675 and 870 nm,
@@ -42,12 +44,11 @@ measurement, the same columns. One level per statistic.
    means no aureole (curvature) cirrus check: slightly more thin-cirrus contamination and a lowered Ångström
    exponent in some seasons (monsoon south-east Asia, the ITCZ). No inversions at night. AOD slightly below
    zero on very clean nights is measurement noise within ±0.01: keep it, do not clip, and say so.
-6. Columns to use: AOD_<λ>nm, Angstrom_Exponent_440_870nm (the 380_500 column has no 380 nm channel at night:
-   avoid it), Precipitable_Water_cm, Lunar_Phase_Angle_Degrees (0 = full Moon, negative = waxing, positive =
-   waning), Optical_Air_Mass (report its range; noise and the faint-signal loss grow with it, so a comparison
-   can be restricted to air mass <= 3 with the restriction stated), Lunar_Zenith_Angle_Degrees,
-   Triplet_Variability_<λ> as a noise indicator (a convention of this skill, not AERONET's: report, or screen,
-   nights whose median triplet variability exceeds 0.02).
+6. Columns (meanings in the data dictionary): AOD_<λ>nm, Angstrom_Exponent_440_870nm (not the 380_500 one),
+   Precipitable_Water_cm, Lunar_Phase_Angle_Degrees, Optical_Air_Mass (report its range; noise and the
+   faint-signal loss grow with it, so a comparison can be restricted to air mass <= 3 with the restriction
+   stated), Triplet_Variability_<λ> as a noise indicator (a convention of this skill, not AERONET's: report,
+   or screen, nights whose median triplet variability exceeds 0.02).
 7. Figures, when warranted: the nightly means as a time series with the solar daily means of the same site
    overlaid in a distinct marker and colour, the same y-axis; a histogram or box plot of night-minus-day
    differences; the phase angle as marker colour when the question is about the lunar cycle; a map of sites

@@ -9,18 +9,25 @@ data_files:                             # the tables, by the name list_sites / d
   aod_l15:         AERONET_AOD_L15_Daily_V3.parquet                # Level 1.5, daily means
   aod_l2_monthly:  AERONET_AOD_L2_Monthly_V3.parquet               # Level 2.0, monthly means
   aod_l15_monthly: AERONET_AOD_L15_Monthly_V3.parquet              # Level 1.5, monthly means
+  aod_l2_points:   AERONET_AOD_L2_AllPoints_V3.parquet             # Level 2.0, all points (about 10 GB)
+  aod_l15_points:  AERONET_AOD_L15_AllPoints_V3.parquet            # Level 1.5, all points (about 10 GB)
   # lunar AOD
   lunar:           AERONET_Lunar_AOD_L2_AllPoints_V3.parquet       # Level 2.0, all points
   lunar_l15:       AERONET_Lunar_AOD_L15_AllPoints_V3.parquet      # Level 1.5, all points
   # inversions, hybrid scans
   inv:             AERONET_INV_Hybrid_L2_Daily_V3.parquet          # Level 2.0, daily means
+  inv_l15_daily:   AERONET_INV_Hybrid_L15_Daily_V3.parquet         # Level 1.5, daily means
   inv_monthly:     AERONET_INV_Hybrid_L2_Monthly_V3.parquet        # Level 2.0, monthly means
   inv_l15_monthly: AERONET_INV_Hybrid_L15_Monthly_V3.parquet       # Level 1.5, monthly means
+  inv_points:      AERONET_INV_Hybrid_L2_AllPoints_V3.parquet      # Level 2.0, all points
+  inv_l15_points:  AERONET_INV_Hybrid_L15_AllPoints_V3.parquet     # Level 1.5, all points
   # inversions, almucantar scans
+  alm_daily:       AERONET_INV_Almucantar_L2_Daily_V3.parquet      # Level 2.0, daily means
+  alm_l15_daily:   AERONET_INV_Almucantar_L15_Daily_V3.parquet     # Level 1.5, daily means
+  alm_monthly:     AERONET_INV_Almucantar_L2_Monthly_V3.parquet    # Level 2.0, monthly means
+  alm_l15_monthly: AERONET_INV_Almucantar_L15_Monthly_V3.parquet   # Level 1.5, monthly means
   alm:             AERONET_INV_Almucantar_L2_AllPoints_V3.parquet  # Level 2.0, all points
   alm_l15:         AERONET_INV_Almucantar_L15_AllPoints_V3.parquet # Level 1.5, all points
-  alm_l15_daily:   AERONET_INV_Almucantar_L15_Daily_V3.parquet     # Level 1.5, daily means
-  alm_l15_monthly: AERONET_INV_Almucantar_L15_Monthly_V3.parquet   # Level 1.5, monthly means
 db_file: agent_turns.sqlite             
 
 keep_turns: 5                           # finished turns the model sees in full; older ones are one index line each (fetch_turn gives the rest)

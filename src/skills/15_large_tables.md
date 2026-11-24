@@ -1,10 +1,14 @@
-WHEN: always, in every cell that reads data. The 13 tables together are several times larger than the memory of
-the sandbox, the all-points tables alone hold millions of rows each: a careless load kills the kernel and loses
-every variable. Loading is planned, not tried.
-1. Take the smallest table that answers the question: a monthly table (0.05–0.3 M rows) before a daily one
-   (0.2–1.6 M) before an all-points one (2–10 M). Monthly and daily tables answer most climatology, trend,
-   ranking and map questions; the all-points tables are for time of day, single nights, single retrievals,
-   screening by a per-retrieval quantity, and for Level 2.0 almucantar inversions (which exist only as points).
+WHEN: always, in every cell that reads data. The 20 tables together are many times larger than the memory of
+the sandbox, the all-points tables hold millions of rows each and the two solar AOD ones (DATA_POINTS
+59 M, DATA_L15_POINTS 68 M, about 10 GB each) tens of millions: a careless load kills the kernel and loses every variable.
+Loading is planned, not tried.
+1. Take the smallest table that answers the question: a monthly table (0.04–0.3 M rows) before a daily one
+   (0.2–1.6 M) before an all-points one (0.7–10 M, the solar AOD points 59 and 68 M). Monthly and daily
+   tables answer most climatology, trend, ranking and map questions; the all-points tables are for time of day,
+   single nights, single retrievals and screening by a per-retrieval quantity. The daily and monthly values
+   are AERONET's own means of those points: a statistic that a daily or monthly table holds is never
+   recomputed from points. DATA_POINTS and DATA_L15_POINTS are opened only for a time-of-day question
+   (time_of_day skill), and always with a site filter, a time window or one aggregation.
 2. Know the size before loading. In pandas a number costs 8 bytes: rows × numeric columns × 8 bytes
    (1 M rows × 10 columns = 80 MB). Text costs about 50 bytes per value: the site name of 8 M rows is about
    0.4 GB on its own, so over many sites the site name stays inside the query, as the GROUP BY key. When
@@ -17,7 +21,8 @@ every variable. Loading is planned, not tried.
                      filters=[("AERONET_Site_Name", "==", "GSFC")])          # ("AERONET_Site_Name", "in", [...]) for a few sites
      duckdb.sql(f"SELECT datetime_utc, AOD_500nm FROM '{DATA_LUNAR}' WHERE AERONET_Site_Name = 'GSFC'").df()
    The busiest site of an all-points table has about 0.1 M rows: fine with a column list, never with every
-   column (the tables have 71 to 497 columns).
+   column (the tables have 71 to 497 columns). In DATA_POINTS and DATA_L15_POINTS a long-record site holds
+   several times more: count first, and add a year or date filter when the question allows one.
 4. Many sites, a region, the network, a whole table: one aggregation inside DuckDB, and only its result comes
    back. The query reads the file in pieces and never holds the table:
      per_site = duckdb.sql(f"""
@@ -30,7 +35,8 @@ every variable. Loading is planned, not tried.
    day (step 6), counts under a condition (count(*) FILTER (WHERE Coincident_AOD440nm >= 0.4)), and a first
    screening of sites (HAVING count(AOD_500nm) >= 100). A list of sites from an earlier step goes in as
    WHERE AERONET_Site_Name IN ('GSFC', 'Kanpur'), built from the Python list.
-   Be efficient: a pass over a whole 10 M-row table takes a few seconds, so there is never a reason to sample
+   Be efficient: a pass over a whole 10 M-row table takes a few seconds (over the solar AOD points tables
+   longer in proportion: select few columns and give the cell a longer timeout), so there is never a reason to sample
    rows, to loop over sites or years in Python (each loop reads the file again), or to spread one aggregation
    over several cells. Ask one query for every statistic the step needs (count, mean, median, percentiles
    together), keep its small result as the variable, and compute from that result afterwards instead of

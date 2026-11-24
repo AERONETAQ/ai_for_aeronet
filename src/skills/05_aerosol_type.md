@@ -14,7 +14,7 @@ WHEN: "what kind of aerosol", "dust or smoke", "fine vs coarse", "Ångström exp
 4. Always report the table of the fraction of days in each class; when a figure is warranted, the AOD–AE scatter
    (x = AE 440–870, y = AOD 500 nm, log y), colored by month or season. This is a classification of daily means,
    not of single plumes.
-5. When the site has inversions (DATA_ALM or DATA_INV, inversions skill), confirm the type with them on the same days: dust =
+5. When the site has inversions (DATA_ALM_DAILY or DATA_INV, inversions skill), confirm the type with them on the same days: dust =
    high depolarization ratio, coarse-dominated volume, SSA rising with wavelength; smoke or pollution = low
    depolarization, fine-dominated, SSA falling with wavelength, SSA(440) below about 0.9 for fresh smoke. Say when the AOD–AE class
    and the inversion disagree. At night (DATA_LUNAR) only the AOD–AE route exists.

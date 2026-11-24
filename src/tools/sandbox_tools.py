@@ -30,10 +30,12 @@ def run_python(code: str, timeout: int = 60) -> str | list:
     '''Run Python code in this conversation's sandbox (a persistent IPython kernel) and return what happened.
     Pre-imported: numpy as np, pandas as pd, matplotlib.pyplot as plt, seaborn as sns.
     Also imported: duckdb, with a 2 GB limit of its own (a query that needs more fails with an error instead of
-    killing the kernel). 13 read-only parquet tables under /data, their paths pre-set as DATA, DATA_L15, DATA_MONTHLY,
-    DATA_L15_MONTHLY, DATA_LUNAR, DATA_LUNAR_L15, DATA_INV, DATA_INV_MONTHLY, DATA_INV_L15_MONTHLY, DATA_ALM,
-    DATA_ALM_L15, DATA_ALM_L15_DAILY, DATA_ALM_L15_MONTHLY; the data dictionary says what each holds. Together they
-    are far larger than the memory of the sandbox: never read a whole table. Read one site with a column list
+    killing the kernel). 20 read-only parquet tables under /data, their paths pre-set as DATA, DATA_L15, DATA_MONTHLY,
+    DATA_L15_MONTHLY, DATA_POINTS, DATA_L15_POINTS, DATA_LUNAR, DATA_LUNAR_L15, DATA_INV, DATA_INV_L15_DAILY,
+    DATA_INV_MONTHLY, DATA_INV_L15_MONTHLY, DATA_INV_POINTS, DATA_INV_L15_POINTS, DATA_ALM_DAILY,
+    DATA_ALM_L15_DAILY, DATA_ALM_MONTHLY, DATA_ALM_L15_MONTHLY, DATA_ALM, DATA_ALM_L15; the data dictionary says
+    what each holds. Together they are far larger than the memory of the sandbox (DATA_POINTS and DATA_L15_POINTS
+    are about 10 GB each): never read a whole table. Read one site with a column list
     (pd.read_parquet(path, columns=[...], filters=[("AERONET_Site_Name", "==", site)])), and do anything over many
     sites as an aggregation inside DuckDB that returns only the small result
     (duckdb.sql(f"SELECT ... FROM '{DATA_LUNAR}' WHERE ... GROUP BY ...").df()); the large_tables skill has the rules.

@@ -2,9 +2,8 @@ WHEN: "typical", "average", "seasonal cycle", "monthly/annual mean", "how much A
 1. Aggregate daily -> monthly means only when the month has enough days; default rule: >= 5 daily values per
    calendar month, and an annual mean needs >= 9 valid months. State the rule you used and how many months/years
    it removed.
-   AERONET's own monthly AOD means (DATA_MONTHLY, DATA_L15_MONTHLY) are the unweighted mean of the month's
-   daily means, where a day counts from 3 measurements and a month is given from 3 such days. Use a monthly
-   table when a monthly mean is all that is asked, above all over many sites or years: keep the months with
+   AERONET's own monthly means (the monthly tables; their rule is in the data dictionary) serve when a
+   monthly mean is all that is asked, above all over many sites or years: keep the months with
    NUM_DAYS_<column> >= 5 to hold the default rule (the inversion monthly tables carry NUM_DAYS_ the same way),
    drop the empty months, and say that the means are AERONET's. A median, a percentile, day-to-day variability
    or another days rule needs the daily table.
@@ -18,7 +17,7 @@ WHEN: "typical", "average", "seasonal cycle", "monthly/annual mean", "how much A
 4. Multi-year climatologies over a changing record are biased if some years are missing whole seasons: check that
    each month-of-year is represented by a similar number of years, otherwise say so.
    The same rules hold for the other tables, with their own units of sampling: inversion products from days with
-   a retrieval (N_ > 0 in a daily table; from DATA_ALM first the daily means by local day; absorption products
+   a retrieval (N_ > 0 in a daily table; from a points table first the daily means by local day; absorption products
    only exist at AOD(440) >= 0.4, inversions skill), lunar statistics from nights (>= 5 nights per month, lunar
    skill), Level 1.5 only where Level 2.0 has nothing (data_levels skill).
 5. A regional or multi-site mean is the mean of the site means (every site counts once), never the mean of all

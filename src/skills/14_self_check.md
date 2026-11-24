@@ -17,12 +17,9 @@ answer (5–6). Say in one line at the end what you checked.
    type and one filter set per statistic; Level 1.5 inversions screened before any absorption number; memory
    after the last cell well under the limit (a turn that needed the release lines says so); a result that looks too clean
    or too extreme deserves one more look.
-4. Figure check (figures skill step 5): every PNG you save is shown to you in the run_python result. Read it like
-   a reviewer, from the image and not from the table: for each panel the highest and the lowest value and where
-   they sit, the title period, the axis labels, the legend against the lines drawn, the n labels, and that everything drawn is explained inside the figure. They must agree
-   with the checked table; no empty, flat or all-NaN panel; no spike that is a fill value or a wrong join rather
-   than an event. Write the "Figure check <file>: ... -> PASS" or "-> FAIL: ..." note as your next message. A
-   figure that fails is corrected, saved again under the same name and checked again, not explained away.
+4. Figure check: for every PNG saved, exactly as the figures skill step 5 says: read the image, compare it
+   with the checked table, write the "Figure check <file>: ... -> PASS" or "-> FAIL: ..." note. A spike that
+   is a fill value or a wrong join rather than an event is a FAIL.
 5. Mismatch: fix it, do not explain it away. Rerun the step, then re-check. Only answer when the checks agree.
 6. Report: one "Checked:" line at the end of the answer naming each check and, for each figure, what you read off
    it and that it matched, e.g. "Checked: annual means recomputed from daily rows (match to 3 decimals); N per

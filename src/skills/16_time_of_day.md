@@ -1,18 +1,19 @@
 WHEN: "diurnal", "time of day", "morning against afternoon", "hourly", "within the day", "at what time", a single
 retrieval or measurement rather than a daily mean, or daily means that you compute yourself from points.
-Tables with a time of day: DATA_ALM and DATA_ALM_L15 (almucantar retrievals by day), DATA_LUNAR and
-DATA_LUNAR_L15 (AOD measurements by night). Solar AOD and the hybrid inversions exist here only as daily and
-monthly means: a daytime AOD diurnal cycle cannot be computed from this corpus; say so instead of
-approximating it.
+Tables with a time of day (the all-points tables): DATA_POINTS and DATA_L15_POINTS (solar AOD measurements by
+day), DATA_LUNAR and DATA_LUNAR_L15 (AOD measurements by night), DATA_ALM and DATA_ALM_L15 (almucantar
+retrievals), DATA_INV_POINTS and DATA_INV_L15_POINTS (hybrid retrievals). A daily, monthly, seasonal or yearly
+statistic comes from the daily and monthly tables, not from these.
 1. Time: datetime_utc is UTC. Time-of-day statistics use the local solar time, UTC + longitude / 15 hours
    (large_tables skill step 6 has the expression); the civil time zone that geocode returns is used only when
    the user asks for clock time. Say which one the answer uses.
 2. AERONET's day is the site's local day, not the UTC day. A daily mean is the arithmetic mean of every
    retrieval whose local solar date (datetime_utc + longitude / 15 h) is that day: AERONET's daily inversion
    tables follow this rule. At sites far from Greenwich (Hawaii, east Asia, Australia, the Pacific) the UTC
-   date splits one day's retrievals over two dates. So daily means made from DATA_ALM (Level 2.0 has no daily
-   table) are grouped by the local day, with N retrievals per day kept, and only then follow the climatology
-   rules. A retrieval day typically holds 2 to 5 almucantar retrievals.
+   date splits one day's retrievals over two dates. AERONET's daily tables are used as they are; daily means
+   that you make yourself from points (after a screening of your own, or for one part of the day) are grouped
+   by the local day, with N per day kept, and only then follow the climatology rules. A retrieval day
+   typically holds 2 to 5 almucantar retrievals.
 3. The almucantar samples the day unevenly, by design. Level 2.0 needs a solar zenith angle of at least 50° at
    the scan (Level 1.5 reaches lower Sun angles), because a low Sun gives the scan its wide range of scattering
    angles. Retrievals therefore sit in the morning and the afternoon and reach local noon only when the noon
@@ -27,7 +28,9 @@ approximating it.
    that comes with a change in AOD is a change of air mass or loading, not a property of the hour. A difference
    inside the retrieval uncertainty (SSA 0.03, fine radius 0.01 µm, AOD 0.01) is "no detectable change",
    whatever its p-value. The geometry itself changes with the hour (the scattering-angle range grows with the
-   solar zenith angle), so small systematic morning–noon differences can be retrieval effects.
+   solar zenith angle), so small systematic morning–noon differences can be retrieval effects. The hybrid
+   scan (DATA_INV_POINTS) reaches a solar zenith angle of 25°, so it samples nearer noon; the two scan types
+   are never pooled in one time-of-day statistic.
 5. Absorption by hour describes hazy hours only: SSA, refractive index, absorption AOD, lidar and depolarization
    ratios exist in Level 2.0 only at AOD(440) >= 0.4 (inversions skill). Size distribution, volume and radii
    exist at any AOD and suit time-of-day work better.
@@ -35,10 +38,23 @@ approximating it.
    of its days with local time, Coincident_AOD440nm, the Ångström exponent, SSA and fine fraction, and read the
    sequence; one retrieval is one sky scan of a few minutes, with the uncertainty of a single retrieval, not of
    a mean.
-7. Nights: the lunar tables hold every measurement; nights, evening and morning halves and the pairing with the
+7. The daytime cycle of AOD (DATA_POINTS; DATA_L15_POINTS for the recent months, provisional): one row is one
+   direct-Sun measurement (sampling, accuracy and cloud screening: aod_measurement skill). Per site and inside one season or month: average each local day's
+   measurements per local-solar-hour bin first, then average the days, so that a day with many measurements
+   does not weigh more than a day with few; show N days per bin. Express the cycle as the departure of each
+   hour from that day's own mean (absolute, or in percent as Smirnov et al. 2002), over days that cover both
+   the morning and the afternoon: otherwise day-to-day changes of the aerosol load pass for an hourly pattern.
+   The sampling is uneven: only cloud-free moments are measured (afternoon convective cloud removes afternoons
+   in humid regions), nothing near sunrise and sunset (large air mass), and winter days are short. A departure
+   within the measurement accuracy (0.01–0.02) is "no detectable cycle". A calibration error gives an AOD error
+   proportional to 1 / air mass, largest at noon: a small cycle that is symmetric about local noon, most of all
+   in Level 1.5, is suspected as that artefact before it is called aerosol (Cachorro et al. 2004).
+   The AOD at a given time (a satellite overpass): the mean of the measurements within ±30 min of it, with N;
+   no measurement in the window means no match, never the daily mean in its place.
+8. Nights: the lunar tables hold every measurement; nights, evening and morning halves and the pairing with the
    solar daily means follow the lunar skill. Night-time sampling has its own confounder, the lunar cycle, as
    daytime retrievals have the solar zenith angle.
-8. Figures, when warranted: local solar hour on the x-axis, one line or panel per season, N written per bin,
+9. Figures, when warranted: local solar hour on the x-axis, one line or panel per season, N written per bin,
    the uncertainty band of the quantity drawn (SSA ±0.03); for a morning–afternoon test a histogram of the
    paired differences with zero marked. The caption names the scan type, the level and the solar-zenith-angle
    limit.

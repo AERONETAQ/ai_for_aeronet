@@ -1,8 +1,10 @@
 WHEN: absorption, "single scattering albedo", SSA, "size distribution", "fine mode / coarse mode", "effective
 radius", "refractive index", sphericity, "non-spherical", "asymmetry factor", "radiative forcing", "lidar ratio",
-depolarization, "how absorbing", "what kind of particles" beyond the Ångström exponent. Tables: DATA_ALM,
-DATA_ALM_L15, DATA_ALM_L15_DAILY, DATA_ALM_L15_MONTHLY (almucantar scans); DATA_INV, DATA_INV_MONTHLY,
-DATA_INV_L15_MONTHLY (hybrid scans).
+depolarization, "how absorbing", "what kind of particles" beyond the Ångström exponent. Tables, each
+family as monthly means, daily means and all points, at Level 2.0 and Level 1.5: DATA_ALM_MONTHLY,
+DATA_ALM_DAILY, DATA_ALM and DATA_ALM_L15_MONTHLY, DATA_ALM_L15_DAILY, DATA_ALM_L15 (almucantar scans);
+DATA_INV_MONTHLY, DATA_INV, DATA_INV_POINTS and DATA_INV_L15_MONTHLY, DATA_INV_L15_DAILY, DATA_INV_L15_POINTS
+(hybrid scans).
 1. What a retrieval is (Dubovik & King 2000; Version 3: Sinyuk et al. 2020): the sky radiance measured in a
    scan at four wavelengths (440, 675, 870, 1020 nm; 443, 667, 865 or 870, 1020 on the ocean-colour
    instruments), together with the coincident AOD, is inverted into a 22-bin volume size distribution, a complex
@@ -13,9 +15,11 @@ DATA_INV_L15_MONTHLY (hybrid scans).
    - the hybrid scan (Model-T instruments, since 2014): reaches the same scattering angles down to a solar
      zenith angle of 25°, so it adds retrievals nearer noon and in summer and in the tropics.
    Which table: a long record, a site without a Model-T, a network-wide absorption climatology, anything before
-   2014 -> DATA_ALM (Level 2.0, one row per retrieval; make daily or monthly means with the time_of_day skill
-   step 2 and the climatology rules). A Model-T site after 2014, or daily means ready made -> DATA_INV;
-   DATA_INV_MONTHLY when a monthly mean is all that is asked. The two scan types are never pooled in one
+   2014 -> the almucantar tables. A Model-T site after 2014, retrievals nearer noon -> the hybrid tables. In
+   either family: the monthly table (DATA_ALM_MONTHLY, DATA_INV_MONTHLY) when a monthly mean is all that is
+   asked; the daily one (DATA_ALM_DAILY, DATA_INV) for everything else built on days; the points (DATA_ALM,
+   DATA_INV_POINTS) for single retrievals, the time of day, or a screening by a per-retrieval quantity (sky
+   residual, solar zenith angle, Coincident_AOD440nm). The two scan types are never pooled in one
    statistic; where a site has both, comparing them is a result in itself. Retrievals are a small subset of AOD
    days (a clear, homogeneous sky over the whole scan is needed): say how many retrieval days against AOD days.
 2. Level 2.0 criteria shape the sample (Holben et al. 2006; Sinyuk et al. 2020): SSA, absorption AOD, the
@@ -29,8 +33,9 @@ DATA_INV_L15_MONTHLY (hybrid scans).
 3. The Level 1.5 inversion tables are a different population, not a provisional copy. They hold every retrieval
    that ran: also low Sun angles below the Level 2.0 limit, poor fits (sky residuals of tens of percent), and
    SSA and refractive index at any AOD, where they are weakly constrained. Rules:
-   - a published-quality statistic uses Level 2.0 (DATA_ALM, DATA_INV, DATA_INV_MONTHLY);
-   - DATA_ALM_L15 is screened per retrieval before any use, with its two flags:
+   - a published-quality statistic uses a Level 2.0 table;
+   - the Level 1.5 points (DATA_ALM_L15, DATA_INV_L15_POINTS) are screened per retrieval before any use, with
+     the two flags:
      If_Retrieval_is_L2_without_L2_0_4_AOD_440_threshold = 1 keeps the retrievals that pass every Level 2.0
      check except the AOD threshold (with If_AOD_is_L2 = 1 these are the Level 2.0 retrievals, now with SSA at
      every AOD); If_AOD_is_L2 = 0 marks retrievals whose input AOD is still Level 1.5 (the recent period, or an
@@ -40,11 +45,12 @@ DATA_INV_L15_MONTHLY (hybrid scans).
      against ±0.03 at 0.4 and above; Dubovik et al. 2000); below 0.2 SSA and the refractive index are not
      interpreted at all;
    - those retrievals (If_AOD_is_L2 = 0) carry no Level 2.0 flag: keep Sky_Residual_percent <= 5–8 and solar
-     zenith angle >= 50° yourself, label the result "provisional (Level 1.5)";
-   - DATA_ALM_L15_DAILY and the Level 1.5 monthly tables are averages of ALL Level 1.5 retrievals, unscreened:
+     zenith angle >= 50° (25° for the hybrid scan) yourself, label the result "provisional (Level 1.5)";
+   - the Level 1.5 daily and monthly tables (DATA_ALM_L15_DAILY, DATA_INV_L15_DAILY, DATA_ALM_L15_MONTHLY,
+     DATA_INV_L15_MONTHLY) are averages of ALL Level 1.5 retrievals, unscreened:
      use them for size and volume products, for coverage ("does this site have inversions lately") and for
      recent months; never for an SSA or refractive-index statistic, which is recomputed from the screened
-     points of DATA_ALM_L15 instead.
+     Level 1.5 points instead.
 4. Uncertainties (Dubovik et al. 2000; Sinyuk et al. 2020): SSA ±0.03 at AOD(440) >= 0.4, larger below; the
    imaginary refractive index 30–50 %; the real part ±0.04, poorly constrained for dust; the size distribution
    15–25 % between 0.1 and 7 µm, worse at both ends; fine-mode volume median radius about ±0.01 µm, coarse about
@@ -75,7 +81,7 @@ DATA_INV_L15_MONTHLY (hybrid scans).
      biomass burning or pollution; the aerosol_type skill's AOD–AE classes and these agree for most days — report when they do not.
 6. Methods: a statistic is built from one table, one level, one scan type and one filter set. Climatologies and
    seasonal cycles follow the climatology skill's rules with retrieval days as the unit (months with >= 5
-   retrieval days); from DATA_ALM, first the daily means by local day, then the months, so that a day with five
+   retrieval days); from a points table, first the daily means by local day, then the months, so that a day with five
    retrievals does not weigh five times a day with one. A mean size distribution = the mean of each of the 22
    dVdlnr bins (missing values skipped), plotted against the bin radius on a logarithmic x-axis; the fine/coarse
    split is AERONET's (VolC_F, VolC_C, the extinction by mode; the separating radius is
@@ -91,8 +97,7 @@ DATA_INV_L15_MONTHLY (hybrid scans).
    days), instruments are swapped, and the uncertainty is 0.03; use the trend skill's method on yearly or
    seasonal means with N per year shown, report the number of retrievals behind each year, and call a change
    smaller than 0.03 over the record undetectable. On the hybrid record (2014 on) describe by year with N instead.
-   Hybrid retrievals as single points, almucantar Level 2.0 as ready-made daily or monthly means, and the phase
-   functions are not in this corpus: say so when asked for them.
+   The phase functions are not in this corpus: say so when asked for them.
 7. Fluxes and forcing: Rad_Forcing_BOA is negative (less sunlight at the surface); Rad_Forcing_TOA negative =
    the aerosol cools the Earth–atmosphere column, positive = warms it (absorbing aerosol over a bright surface or
    clouds); Forcing_Eff = forcing per unit AOD at 550 nm. They are instantaneous values at the scan times, at
